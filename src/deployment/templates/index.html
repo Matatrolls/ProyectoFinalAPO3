@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clasificador de Calidad de Frutas y Faja Simuladora</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Socket.IO & Chart.js -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --bg-primary: #0a0b10;
+            --bg-surface: rgba(20, 22, 34, 0.6);
+            --bg-glass: rgba(30, 32, 50, 0.45);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --text-primary: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.35);
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.25);
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.35);
+            --card-radius: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.08) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(30, 32, 50, 0.3) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* --- Header --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        header .logo-group h1 {
+            font-size: 28px;
+            background: linear-gradient(135deg, #a78bfa, #6366f1, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        header .logo-group p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        select {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            color: var(--text-primary);
+            padding: 10px 16px;
+            border-radius: 8px;
+            outline: none;
+            cursor: pointer;
+            font-weight: 500;
+            appearance: none;
+            padding-right: 40px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        select:hover, select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .select-wrapper::after {
+            content: '▼';
+            font-size: 10px;
+            color: var(--text-secondary);
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        .status-badge {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-badge .dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.6; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.6; }
+        }
+
+        /* --- Layout Grid --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 24px;
+        }
+
+        .glass-card {
+            background: var(--bg-surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--card-radius);
+            padding: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* --- Panel de Diagnóstico (Izquierdo) --- */
+        .diagnostic-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 8px;
+        }
+
+        .media-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 4/3;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            border: 1px solid var(--border-glass);
+        }
+
+        #webcam, #preview-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #preview-img.hidden {
+            display: none;
+        }
+
+        .webcam-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0,0,0,0.5);
+            z-index: 2;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .webcam-overlay:hover {
+            background: rgba(0,0,0,0.3);
+        }
+
+        .webcam-overlay button {
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px var(--primary-glow);
+            transition: all 0.2s ease;
+        }
+
+        .webcam-overlay button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px var(--primary-glow);
+        }
+
+        /* --- Panel de resultados (diagnóstico) --- */
+        .result-details {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .result-row .label {
+            color: var(--text-secondary);
+        }
+
+        .result-row .value {
+            font-weight: 600;
+        }
+
+        .value-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .value-badge.good {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .value-badge.bad {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .value-badge.normal {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .value-badge.unknown {
+            background: rgba(156, 163, 175, 0.15);
+            color: var(--text-secondary);
+            border: 1px solid rgba(156, 163, 175, 0.3);
+        }
+
+        .file-upload-btn {
+            background: var(--bg-glass);
+            border: 1px dashed var(--border-glass);
+            color: var(--text-secondary);
+            padding: 12px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+        }
+
+        .file-upload-btn:hover {
+            border-color: var(--primary);
+            color: var(--text-primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* --- Panel Faja Transportadora (Derecho Superior) --- */
+        .main-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .conveyor-container {
+            position: relative;
+            height: 380px;
+            border-radius: var(--card-radius);
+            overflow: hidden;
+            background: #11121b;
+            border: 1px solid var(--border-glass);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        /* Alarma de OOD */
+        .alarm-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(239, 68, 68, 0.15);
+            border: 4px solid var(--danger);
+            z-index: 10;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: flash 1s infinite alternate;
+        }
+
+        .alarm-box {
+            background: var(--bg-primary);
+            border: 2px solid var(--danger);
+            padding: 20px 40px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 0 30px var(--danger-glow);
+        }
+
+        .alarm-box h3 {
+            color: var(--danger);
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .alarm-box p {
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        @keyframes flash {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .conveyor-belt {
+            position: relative;
+            width: 100%;
+            height: 80px;
+            background: #252836;
+            margin-top: 100px;
+            border-radius: 8px;
+            box-shadow: inset 0 4px 10px rgba(0,0,0,0.5), 0 4px 15px rgba(0,0,0,0.4);
+            border-top: 4px solid #3f4357;
+            border-bottom: 4px solid #3f4357;
+            overflow: visible;
+        }
+
+        .belt-rollers {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            align-items: center;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .roller {
+            width: 12px;
+            height: 12px;
+            background: #4e536c;
+            border-radius: 50%;
+            border: 2px solid #1a1b24;
+            animation: spin 1s linear infinite;
+        }
+
+        .conveyor-belt.halted .roller {
+            animation-play-state: paused;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Elemento Fruta en la Faja */
+        .fruit-item {
+            position: absolute;
+            left: -60px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+            z-index: 5;
+            transition: transform 0.5s ease;
+        }
+
+        /* Movimiento de faja */
+        @keyframes conveyorMove {
+            0% { left: -60px; }
+            45% { left: 45%; } /* Punto de escaneo */
+            55% { left: 45%; }
+            100% { left: 105%; }
+        }
+
+        /* Escáner */
+        .scanner-unit {
+            position: absolute;
+            left: 45%;
+            top: 40px;
+            width: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 8;
+        }
+
+        .scanner-device {
+            width: 50px;
+            height: 30px;
+            background: #3a3b4c;
+            border-radius: 6px;
+            border: 2px solid var(--border-glass);
+            position: relative;
+        }
+
+        .scanner-device::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 4px;
+        }
+
+        .scanner-laser {
+            width: 2px;
+            height: 110px;
+            background: rgba(239, 68, 68, 0.7);
+            box-shadow: 0 0 12px 3px rgba(239, 68, 68, 0.8);
+            transform-origin: top;
+            animation: laserSweep 1.5s infinite alternate ease-in-out;
+            display: none;
+        }
+
+        .scanner-laser.active {
+            display: block;
+        }
+
+        @keyframes laserSweep {
+            0% { transform: scaleX(1) rotate(-15deg); }
+            100% { transform: scaleX(1) rotate(15deg); }
+        }
+
+        /* Brazos mecánicos / Desvíos */
+        .sorting-bin-container {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-top: 20px;
+            gap: 16px;
+            z-index: 5;
+        }
+
+        .sorting-bin {
+            flex: 1;
+            height: 85px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid var(--border-glass);
+            font-size: 13px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .sorting-bin.good {
+            background: rgba(16, 185, 129, 0.08);
+            border-color: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+        .sorting-bin.good.active {
+            background: rgba(16, 185, 129, 0.2);
+            box-shadow: 0 0 15px var(--success-glow);
+        }
+
+        .sorting-bin.bad {
+            background: rgba(239, 68, 68, 0.08);
+            border-color: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+        .sorting-bin.bad.active {
+            background: rgba(239, 68, 68, 0.2);
+            box-shadow: 0 0 15px var(--danger-glow);
+        }
+
+        .sorting-bin.normal {
+            background: rgba(245, 158, 11, 0.08);
+            border-color: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+        }
+        .sorting-bin.normal.active {
+            background: rgba(245, 158, 11, 0.2);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
+        }
+
+        .sorting-bin span.title {
+            font-weight: 600;
+            font-family: 'Outfit', sans-serif;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .sorting-bin span.count {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        /* --- Panel Inferior de Estadísticas --- */
+        .bottom-panel {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 24px;
+        }
+
+        .stat-card-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        .metric-card {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .metric-card .title {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .metric-card .number {
+            font-size: 28px;
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .metric-card .number.blue { color: var(--primary); }
+        .metric-card .number.green { color: var(--success); }
+        .metric-card .number.red { color: var(--danger); }
+        .metric-card .number.orange { color: var(--warning); }
+
+        .chart-container {
+            position: relative;
+            height: 220px;
+            width: 100%;
+        }
+
+        /* --- Control de la faja simuladora --- */
+        .conveyor-controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .conveyor-controls button {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1px solid var(--border-glass);
+            background: var(--bg-glass);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .conveyor-controls button.primary {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 15px var(--primary-glow);
+        }
+
+        .conveyor-controls button.primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px var(--primary-glow);
+        }
+
+        .conveyor-controls button:hover:not(.primary) {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--text-secondary);
+        }
+
+        /* --- Responsividad --- */
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .bottom-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <header>
+        <div class="logo-group">
+            <h1>FRUIT QUALITY SCANNERS</h1>
+            <p>Monitoreo en Tiempo Real y Diagnóstico de Calidad Geométrico/Visual</p>
+        </div>
+        <div class="controls">
+            <div class="select-wrapper">
+                <select id="model-select">
+                    <option value="cnn">CNN Multi-Head (Deep Learning)</option>
+                    <option value="svm">SVM RBF (Tabular HSV+HOG)</option>
+                    <option value="random_forest">Random Forest (Tabular HSV+HOG)</option>
+                </select>
+            </div>
+            <div class="status-badge">
+                <div class="dot"></div>
+                <span>CONECTADO AL SISTEMA</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Dashboard Grid -->
+    <div class="dashboard-grid">
+        
+        <!-- Columna Izquierda: Diagnóstico e Entrada -->
+        <div class="diagnostic-panel">
+            <div class="glass-card">
+                <h3 class="section-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    Cámara de Inspección
+                </h3>
+                
+                <div class="media-container">
+                    <video id="webcam" autoplay playsinline muted></video>
+                    <img id="preview-img" class="hidden" alt="Vista previa de carga">
+                    
+                    <div class="webcam-overlay" id="webcam-prompt">
+                        <button onclick="startWebcam()">Activar Cámara</button>
+                    </div>
+                </div>
+                
+                <label for="file-input" class="file-upload-btn">
+                    📁 O Subir Imagen Manualmente
+                </label>
+                <input type="file" id="file-input" accept="image/*">
+            </div>
+
+            <div class="glass-card">
+                <h3 class="section-title">Resultados del Escaneo</h3>
+                
+                <div class="result-details">
+                    <div class="result-row">
+                        <span class="label">Objeto Detectado:</span>
+                        <span id="res-fruit" class="value">Esperando...</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="label">Calidad Asignada:</span>
+                        <span id="res-quality" class="value">-</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="label">Clase de Tamaño:</span>
+                        <span id="res-size" class="value">-</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="label">Diámetro Norm:</span>
+                        <span id="res-diameter" class="value">0.00 px</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="label">Confianza Fruta:</span>
+                        <span id="res-conf-f" class="value">0%</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="label">Confianza Calidad:</span>
+                        <span id="res-conf-q" class="value">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Faja Simuladora y Gráficos -->
+        <div class="main-panel">
+            <!-- Simulador de Faja -->
+            <div class="glass-card conveyor-container">
+                <h3 class="section-title">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                    Simulador de Faja Clasificadora en Tiempo Real
+                </h3>
+
+                <!-- Alarma OOD -->
+                <div class="alarm-overlay" id="alarm-overlay">
+                    <div class="alarm-box">
+                        <h3>⚠️ FAJA DETENIDA</h3>
+                        <p id="alarm-msg">Objeto desconocido o anomalía de confianza detectada en la zona de escáner.</p>
+                        <button class="conveyor-controls" onclick="resetAlarm()" style="margin-top: 15px; width: 100%;">Reanudar Faja</button>
+                    </div>
+                </div>
+
+                <!-- Escáner superior -->
+                <div class="scanner-unit">
+                    <div class="scanner-device"></div>
+                    <div class="scanner-laser" id="laser"></div>
+                </div>
+
+                <!-- Banda -->
+                <div class="conveyor-belt" id="belt">
+                    <div class="belt-rollers">
+                        <div class="roller"></div>
+                        <div class="roller"></div>
+                        <div class="roller"></div>
+                        <div class="roller"></div>
+                        <div class="roller"></div>
+                        <div class="roller"></div>
+                        <div class="roller"></div>
+                    </div>
+                    
+                    <!-- Contenedor donde se animarán las frutas -->
+                    <div id="fruit-target"></div>
+                </div>
+
+                <!-- Contenedores de Destino / Clasificadores -->
+                <div class="sorting-bin-container">
+                    <div class="sorting-bin good" id="bin-good">
+                        <span class="title">Bandeja: BUENO ✅</span>
+                        <span class="count" id="count-good">0</span>
+                    </div>
+                    <div class="sorting-bin normal" id="bin-normal">
+                        <span class="title">Bandeja: NORMAL ⚠️</span>
+                        <span class="count" id="count-normal">0</span>
+                    </div>
+                    <div class="sorting-bin bad" id="bin-bad">
+                        <span class="title">Bandeja: DESCARTE ❌</span>
+                        <span class="count" id="count-bad">0</span>
+                    </div>
+                </div>
+
+                <!-- Controles del simulador -->
+                <div class="conveyor-controls">
+                    <button class="primary" onclick="spawnSimulatedFruit()">Clasificar Fruta Aleatoria</button>
+                    <button onclick="clearSimulation()">Reiniciar Contadores</button>
+                </div>
+            </div>
+
+            <!-- Bottom Panel: Estadísticas en vivo -->
+            <div class="bottom-panel">
+                <!-- Tarjetas métricas -->
+                <div class="stat-card-grid">
+                    <div class="metric-card">
+                        <span class="title">Total Escaneados</span>
+                        <span class="number blue" id="metric-total">0</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="title">Aceptados (Buenos)</span>
+                        <span class="number green" id="metric-good">0</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="title">Clase Regular (Normal)</span>
+                        <span class="number orange" id="metric-normal">0</span>
+                    </div>
+                    <div class="metric-card">
+                        <span class="title">Descartados (Malos/OOD)</span>
+                        <span class="number red" id="metric-bad">0</span>
+                    </div>
+                </div>
+
+                <!-- Gráfico de distribución de frutas por tipo -->
+                <div class="glass-card">
+                    <h3 class="section-title" style="font-size:16px;">Distribución de Frutas Escaneadas</h3>
+                    <div class="chart-container">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Variables globales
+    let socket;
+    let webcamActive = false;
+    let cameraInterval = null;
+    let video = document.getElementById('webcam');
+    let previewImg = document.getElementById('preview-img');
+    let modelSelect = document.getElementById('model-select');
+    
+    // Contadores del simulador
+    let counts = { good: 0, normal: 0, bad: 0, total: 0 };
+    let fruitCounts = { Apple: 0, Banana: 0, Guava: 0, Lime: 0, Orange: 0, Pomegranate: 0 };
+    
+    // Emojis de frutas
+    const FRUIT_EMOJIS = {
+        Apple: '🍎',
+        Banana: '🍌',
+        Guava: '🥝', // Aproximación
+        Lime: '🍋',
+        Orange: '🍊',
+        Pomegranate: '🍎' // Pomegranate
+    };
+
+    // Conectar Socket.IO
+    socket = io();
+
+    socket.on('connect', () => {
+        console.log("Conectado a Socket.IO!");
+    });
+
+    socket.on('prediction_result', (data) => {
+        updateDiagnosticPanel(data);
+        handlePredictionInSimulation(data);
+    });
+
+    // --- Control de la Cámara ---
+    function startWebcam() {
+        document.getElementById('webcam-prompt').style.display = 'none';
+        previewImg.classList.add('hidden');
+        video.style.display = 'block';
+
+        navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } })
+            .then(stream => {
+                video.srcObject = stream;
+                webcamActive = true;
+                
+                // Empezar a enviar frames cada 350ms
+                cameraInterval = setInterval(sendFrame, 350);
+            })
+            .catch(err => {
+                console.error("Error al acceder a la cámara:", err);
+                alert("No se pudo iniciar la cámara.");
+                document.getElementById('webcam-prompt').style.display = 'flex';
+            });
+    }
+
+    function sendFrame() {
+        if (!webcamActive) return;
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        
+        socket.emit('video_frame', {
+            image: dataUrl,
+            model: modelSelect.value
+        });
+    }
+
+    // --- Manejo del File Uploader ---
+    const fileInput = document.getElementById('file-input');
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Desactivar cámara si estaba activa
+        if (webcamActive) {
+            webcamActive = false;
+            clearInterval(cameraInterval);
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+            video.style.display = 'none';
+        }
+
+        // Mostrar vista previa
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            previewImg.src = event.target.result;
+            previewImg.classList.remove('hidden');
+            document.getElementById('webcam-prompt').style.display = 'none';
+            
+            // Enviar la imagen mediante AJAX predict
+            const formData = new FormData();
+            formData.append('image', file);
+            formData.append('model', modelSelect.value);
+
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                updateDiagnosticPanel(data);
+                handlePredictionInSimulation(data);
+            })
+            .catch(err => console.error("Error al enviar imagen:", err));
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // --- Actualizar Panel de Resultados ---
+    function updateDiagnosticPanel(data) {
+        if (data.status === "error") {
+            console.error("Error pred:", data.message);
+            return;
+        }
+
+        document.getElementById('res-fruit').innerText = data.fruit;
+        
+        // Calidad badge
+        const qualitySpan = document.getElementById('res-quality');
+        qualitySpan.innerText = data.quality;
+        qualitySpan.className = 'value value-badge';
+        if (data.quality === 'Bueno') qualitySpan.classList.add('good');
+        else if (data.quality === 'Malo') qualitySpan.classList.add('bad');
+        else if (data.quality === 'Normal') qualitySpan.classList.add('normal');
+        else qualitySpan.classList.add('unknown');
+
+        // Tamaño
+        document.getElementById('res-size').innerText = data.size_class;
+        document.getElementById('res-diameter').innerText = (data.d_norm * 100).toFixed(2) + " %";
+        document.getElementById('res-conf-f').innerText = (data.confidence_fruit * 100).toFixed(1) + "%";
+        document.getElementById('res-conf-q').innerText = (data.confidence_quality * 100).toFixed(1) + "%";
+    }
+
+    // --- Simulación de la Faja Clasificadora ---
+    let simulationActive = true;
+    let currentMovingFruit = null;
+
+    // Lista de frutas simuladas para el spawn aleatorio
+    const SIM_FRUITS = ['Apple', 'Banana', 'Lime', 'Orange', 'Pomegranate'];
+    const SIM_QUALITIES = ['Bueno', 'Malo'];
+
+    function spawnSimulatedFruit() {
+        if (!simulationActive) return;
+        if (currentMovingFruit) return; // Permitir uno por uno para mantener orden
+        
+        // Activar láser
+        document.getElementById('laser').classList.add('active');
+
+        // Escoger una fruta aleatoria
+        const randomFruit = SIM_FRUITS[Math.floor(Math.random() * SIM_FRUITS.length)];
+        const emoji = FRUIT_EMOJIS[randomFruit] || '🍎';
+        
+        // Crear elemento en la faja
+        const fruitEl = document.createElement('div');
+        fruitEl.className = 'fruit-item';
+        fruitEl.innerText = emoji;
+        document.getElementById('fruit-target').appendChild(fruitEl);
+        currentMovingFruit = fruitEl;
+
+        // Iniciar animación (se desplaza de izquierda a la zona de escáner)
+        fruitEl.style.transition = 'left 1.5s linear';
+        setTimeout(() => {
+            fruitEl.style.left = '45%';
+        }, 50);
+
+        // Al llegar a la zona de escáner (1.5s después), simular solicitud HTTP o usar webcam actual
+        setTimeout(() => {
+            // Mandar a clasificar
+            // Si la webcam o imagen manual no están, simulamos el resultado en el servidor
+            // cargando una imagen ficticia según el nombre para que el pipeline lo procese
+            // Para simplicidad en el frontend, simulamos la respuesta aquí o la solicitamos
+            // Simulamos respuesta correspondiente al comportamiento del pipeline:
+            const simulatedQuality = Math.random() > 0.35 ? 'Bueno' : 'Malo';
+            const oodChance = Math.random() < 0.05; // 5% chance de OOD
+            
+            let mockPred = {
+                status: "success",
+                fruit: oodChance ? "Desconocido" : randomFruit,
+                quality: oodChance ? "Desconocido" : simulatedQuality,
+                d_norm: 0.45 + (Math.random() * 0.2),
+                confidence_fruit: oodChance ? 0.40 : 0.85 + (Math.random() * 0.15),
+                confidence_quality: oodChance ? 0.30 : 0.75 + (Math.random() * 0.2),
+                size_class: Math.random() > 0.5 ? 'Mediano' : (Math.random() > 0.5 ? 'Grande' : 'Pequeño')
+            };
+
+            // Ejecutar el diagnóstico
+            updateDiagnosticPanel(mockPred);
+            handlePredictionInSimulation(mockPred);
+
+        }, 1600);
+    }
+
+    function handlePredictionInSimulation(data) {
+        if (!currentMovingFruit) return;
+        
+        const fruitEl = currentMovingFruit;
+        const laser = document.getElementById('laser');
+
+        // Evaluar resultado
+        if (data.fruit === 'Desconocido' || data.fruit === 'No es Fruta') {
+            // OOD - Anomalía! Detener faja y disparar alarma
+            haltConveyor("Alarma: Objeto no identificado o de baja confianza detectado.");
+            laser.classList.remove('active');
+            return;
+        }
+
+        // Si es válida, clasificar en su bandeja
+        let binId = 'bin-normal';
+        let qualityClass = 'normal';
+
+        if (data.quality === 'Bueno') {
+            binId = 'bin-good';
+            qualityClass = 'good';
+        } else if (data.quality === 'Malo') {
+            binId = 'bin-bad';
+            qualityClass = 'bad';
+        }
+
+        const binEl = document.getElementById(binId);
+
+        // Animación hacia la bandeja
+        setTimeout(() => {
+            laser.classList.remove('active');
+            fruitEl.style.transition = 'all 1s ease-in-out';
+            
+            // Obtener coordenadas de la bandeja seleccionada
+            const binRect = binEl.getBoundingClientRect();
+            const beltRect = document.getElementById('belt').getBoundingClientRect();
+            
+            const targetX = binRect.left - beltRect.left + (binRect.width / 2) - 25;
+            const targetY = binRect.top - beltRect.top + (binRect.height / 2) - 25;
+
+            fruitEl.style.left = targetX + 'px';
+            fruitEl.style.top = targetY + 'px';
+            fruitEl.style.transform = 'scale(0.3) rotate(180deg)';
+            fruitEl.style.opacity = '0';
+        }, 600);
+
+        // Sumar contadores al terminar de caer en la bandeja
+        setTimeout(() => {
+            counts[qualityClass]++;
+            counts.total++;
+            
+            if (fruitCounts[data.fruit] !== undefined) {
+                fruitCounts[data.fruit]++;
+            }
+
+            updateCounters();
+            updateChart();
+            
+            // Eliminar elemento de fruta y liberar faja para el siguiente
+            fruitEl.remove();
+            currentMovingFruit = null;
+            
+            // Destellar la bandeja momentáneamente
+            binEl.classList.add('active');
+            setTimeout(() => binEl.classList.remove('active'), 400);
+
+        }, 1700);
+    }
+
+    function haltConveyor(message) {
+        simulationActive = false;
+        document.getElementById('belt').classList.add('halted');
+        document.getElementById('alarm-msg').innerText = message;
+        document.getElementById('alarm-overlay').style.display = 'flex';
+    }
+
+    function resetAlarm() {
+        document.getElementById('alarm-overlay').style.display = 'none';
+        document.getElementById('belt').classList.remove('halted');
+        simulationActive = true;
+        
+        // Remover fruta que causó el atasco
+        if (currentMovingFruit) {
+            currentMovingFruit.remove();
+            currentMovingFruit = null;
+        }
+    }
+
+    function updateCounters() {
+        document.getElementById('count-good').innerText = counts.good;
+        document.getElementById('count-normal').innerText = counts.normal;
+        document.getElementById('count-bad').innerText = counts.bad;
+
+        document.getElementById('metric-total').innerText = counts.total;
+        document.getElementById('metric-good').innerText = counts.good;
+        document.getElementById('metric-normal').innerText = counts.normal;
+        document.getElementById('metric-bad').innerText = counts.bad;
+    }
+
+    function clearSimulation() {
+        counts = { good: 0, normal: 0, bad: 0, total: 0 };
+        for (let k in fruitCounts) fruitCounts[k] = 0;
+        updateCounters();
+        updateChart();
+        if (currentMovingFruit) {
+            currentMovingFruit.remove();
+            currentMovingFruit = null;
+        }
+        resetAlarm();
+    }
+
+    // --- Configuración y Actualización del Gráfico Chart.js ---
+    let ctx = document.getElementById('barChart').getContext('2d');
+    let barChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: Object.keys(fruitCounts),
+            datasets: [{
+                label: 'Cantidad Escaneada',
+                data: Object.values(fruitCounts),
+                backgroundColor: [
+                    'rgba(239, 68, 68, 0.6)',  // Apple (Red)
+                    'rgba(245, 158, 11, 0.6)',  // Banana (Yellow/Orange)
+                    'rgba(16, 185, 129, 0.6)',  // Guava (Green)
+                    'rgba(139, 92, 246, 0.6)',  // Lime (Lime/Purple)
+                    'rgba(251, 146, 60, 0.6)',  // Orange (Orange)
+                    'rgba(236, 72, 153, 0.6)'   // Pomegranate (Pink)
+                ],
+                borderColor: [
+                    '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#fb923c', '#ec4899'
+                ],
+                borderWidth: 1.5,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                    ticks: { color: '#9ca3af', stepSize: 1 }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#9ca3af' }
+                }
+            }
+        }
+    });
+
+    function updateChart() {
+        barChart.data.datasets[0].data = Object.values(fruitCounts);
+        barChart.update();
+    }
+
+</script>
+</body>
+</html>
