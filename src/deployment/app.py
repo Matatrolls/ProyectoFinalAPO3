@@ -81,33 +81,88 @@ def base64_to_cv2(b64_string):
     nparr = np.frombuffer(img_data, np.uint8)
     return cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
-def crop_contour(img, contour, padding=0.15):
+def crop_contour(img, contour, target_ratio=0.70):
     """
-    Segmenta la fruta basándose en el contorno, limpia el fondo y la recorta con padding.
+    Aisla la fruta del contorno, preserva su relación de aspecto y la coloca centradamente
+    sobre un lienzo cuadrado blanco a una escala estándar (target_ratio), emulando las
+    imágenes del dataset Kaggle.
     """
     h, w = img.shape[:2]
-    white_bg = np.ones_like(img) * 255
-    mask = np.zeros((h, w), dtype=np.uint8)
-    cv2.drawContours(mask, [contour], -1, 255, -1)
     
-    masked_img = np.where(mask[:, :, np.newaxis] == 255, img, white_bg)
-    
+    # Obtener caja delimitadora
     x, y, bw, bh = cv2.boundingRect(contour)
     if bw == 0 or bh == 0:
         return img
         
-    pad_w = int(bw * padding)
-    pad_h = int(bh * padding)
+    # Extraer la región de interés (ROI) de la imagen y de la máscara
+    mask = np.zeros((h, w), dtype=np.uint8)
+    cv2.drawContours(mask, [contour], -1, 255, -1)
     
-    x1 = max(0, x - pad_w)
-    y1 = max(0, y - pad_h)
-    x2 = min(w, x + bw + pad_w)
-    y2 = min(h, y + bh + pad_h)
+    roi_img = img[y:y+bh, x:x+bw]
+    roi_mask = mask[y:y+bh, x:x+bw]
     
-    cropped = masked_img[y1:y2, x1:x2]
-    if cropped.size == 0:
+    # Aislar la fruta en el ROI (píxeles fuera de la máscara a blanco)
+    isolated_roi = np.ones_like(roi_img) * 255
+    isolated_roi[roi_mask == 255] = roi_img[roi_mask == 255]
+    
+    # Crear un lienzo cuadrado blanco basado en el tamaño de la fruta
+    max_dim = max(bw, bh)
+    square_size = int(max_dim / target_ratio)
+    if square_size <= 0:
         return img
-    return cropped
+        
+    square_canvas = np.ones((square_size, square_size, 3), dtype=np.uint8) * 255
+    
+    # Calcular coordenadas para centrar el ROI en el lienzo cuadrado
+    offset_x = (square_size - bw) // 2
+    offset_y = (square_size - bh) // 2
+    
+    # Pegar la fruta en el lienzo
+    square_canvas[offset_y:offset_y+bh, offset_x:offset_x+bw] = isolated_roi
+    
+    return square_canvas
+
+def crop_square_unmasked(img, contour, target_ratio=0.70):
+    """
+    Recorta una región cuadrada centrada en el contorno sin enmascaramiento
+    de fondo blanco, para preservar las texturas y sombras originales.
+    """
+    h, w = img.shape[:2]
+    x, y, bw, bh = cv2.boundingRect(contour)
+    if bw == 0 or bh == 0:
+        return img
+        
+    cx = x + bw // 2
+    cy = y + bh // 2
+    
+    max_dim = max(bw, bh)
+    square_size = int(max_dim / target_ratio)
+    
+    # Coordenadas de recorte
+    x1 = cx - square_size // 2
+    y1 = cy - square_size // 2
+    x2 = x1 + square_size
+    y2 = y1 + square_size
+    
+    mean_color = cv2.mean(img)[:3]
+    
+    # Lienzo con padding
+    padded_img = cv2.copyMakeBorder(
+        img,
+        top=max(0, -y1),
+        bottom=max(0, y2 - h),
+        left=max(0, -x1),
+        right=max(0, x2 - w),
+        borderType=cv2.BORDER_CONSTANT,
+        value=mean_color
+    )
+    
+    crop_x1 = x1 + max(0, -x1)
+    crop_y1 = y1 + max(0, -y1)
+    crop_x2 = x2 + max(0, -x1)
+    crop_y2 = y2 + max(0, -y1)
+    
+    return padded_img[crop_y1:crop_y2, crop_x1:crop_x2]
 
 FRUIT_COLORS = {
     "Apple": (16, 185, 129),       # Verde neón BGR
@@ -190,9 +245,6 @@ def process_and_predict(img_bgr, model_name="cnn", threshold=None):
     valid_contours = sorted(valid_contours, key=lambda item: item[1], reverse=True)
     
     for idx, (contour, area, area_norm, x, y, bw, bh) in enumerate(valid_contours):
-        # Aislar y recortar la fruta sobre fondo blanco
-        cropped_img = crop_contour(img_bgr, contour)
-        
         pred_fruit = "Desconocido"
         pred_quality = "Desconocido"
         conf_f = 0.0
@@ -200,6 +252,8 @@ def process_and_predict(img_bgr, model_name="cnn", threshold=None):
         
         # ── Inferencia con el modelo correspondiente ──
         if model_name == "cnn" and cnn_model is not None:
+            # Aislar y recortar la fruta sobre fondo blanco para la CNN
+            cropped_img = crop_contour(img_bgr, contour)
             img_rgb = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2RGB)
             tensor_img = cnn_transform(img_rgb).unsqueeze(0).to(device)
             
@@ -221,6 +275,8 @@ def process_and_predict(img_bgr, model_name="cnn", threshold=None):
         elif model_name in ("random_forest", "svm") and (rf_model is not None or svm_model is not None):
             model = rf_model if model_name == "random_forest" else svm_model
             if model is not None:
+                # Recortar la fruta sin enmascarar para modelos tradicionales
+                cropped_img = crop_square_unmasked(img_bgr, contour)
                 img_resized = cv2.resize(cropped_img, (IMG_SIZE, IMG_SIZE))
                 hsv_feats = extract_hsv_histogram(img_resized)
                 hog_feats = extract_hog_features(img_resized)
