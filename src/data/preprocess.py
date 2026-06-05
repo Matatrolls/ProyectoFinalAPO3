@@ -85,48 +85,44 @@ def get_project_root() -> Path:
     return Path(__file__).resolve().parent.parent.parent
 
 
-def find_kaggle_dataset_path() -> Path | None:
+def find_kaggle_dataset_path(dataset_handle: str) -> Path | None:
     """
     Localiza automáticamente el dataset de Kaggle en la caché local de kagglehub.
     Si no se encuentra, intenta descargarlo.
 
-    La estructura real del caché de kagglehub es:
-        ~/.cache/kagglehub/datasets/ryandpark/fruit-quality-classification/versions/1/
-            ├── Bad Quality_Fruits/
-            ├── Good Quality_Fruits/
-            └── Mixed Qualit_Fruits/
+    Args:
+        dataset_handle: El handle del dataset en Kaggle (ej. "ryandpark/fruit-quality-classification").
 
     Returns:
         Path al directorio raíz del dataset (que contiene las carpetas de calidad).
         None si no puede encontrarlo ni descargarlo.
     """
-    # La caché de kagglehub organiza los datos en:
-    #   <dataset>/versions/<numero_version>/
-    versions_path = (
-        Path.home() / ".cache" / "kagglehub" / "datasets"
-        / "ryandpark" / "fruit-quality-classification" / "versions"
-    )
-
-    if versions_path.exists():
-        # Ordenar por nombre; '1', '2', etc. — tomar el mayor
-        version_dirs = sorted(
-            [p for p in versions_path.iterdir() if p.is_dir()],
-            key=lambda p: p.name
+    try:
+        parts = dataset_handle.split('/')
+        versions_path = (
+            Path.home() / ".cache" / "kagglehub" / "datasets"
+            / parts[0] / parts[1] / "versions"
         )
-        if version_dirs:
-            dataset_root = version_dirs[-1]
-            print(f"[preprocess] Dataset de Kaggle encontrado en: {dataset_root}")
-            return dataset_root
 
-    # Si no está en caché, intentar descargar automáticamente
-    print("[preprocess] Dataset no encontrado en caché. Intentando descargar...")
+        if versions_path.exists():
+            version_dirs = sorted(
+                [p for p in versions_path.iterdir() if p.is_dir()],
+                key=lambda p: p.name
+            )
+            if version_dirs:
+                dataset_root = version_dirs[-1]
+                print(f"[preprocess] Dataset de Kaggle '{dataset_handle}' encontrado en: {dataset_root}")
+                return dataset_root
+    except Exception as e:
+        print(f"[preprocess] Error buscando en caché para {dataset_handle}: {e}")
+
+    print(f"[preprocess] Dataset '{dataset_handle}' no encontrado en caché. Intentando descargar...")
     try:
         import kagglehub
-        path_str = kagglehub.dataset_download("ryandpark/fruit-quality-classification")
+        path_str = kagglehub.dataset_download(dataset_handle)
         return Path(path_str)
     except Exception as e:
-        print(f"[preprocess] ERROR al descargar el dataset: {e}")
-        print("[preprocess] Ejecuta el script download_dataset.py primero.")
+        print(f"[preprocess] ERROR al descargar el dataset {dataset_handle}: {e}")
         return None
 
 
@@ -230,9 +226,9 @@ def extract_tabular_features(image_path: str) -> np.ndarray | None:
 # Inventario del dataset
 # ─────────────────────────────────────────────
 
-def build_inventory(kaggle_root: Path | None, custom_root: Path) -> list[dict]:
+def build_inventory(kaggle_roots: list[Path | None], custom_root: Path) -> list[dict]:
     """
-    Escanea el dataset de Kaggle y el custom_dataset para construir un inventario
+    Escanea los datasets de Kaggle y el custom_dataset para construir un inventario
     de imágenes con sus etiquetas.
 
     El inventario es una lista de diccionarios con las siguientes claves:
@@ -243,7 +239,7 @@ def build_inventory(kaggle_root: Path | None, custom_root: Path) -> list[dict]:
         quality_idx: int  — Índice numérico de la calidad
 
     Args:
-        kaggle_root:  Ruta al directorio raíz del dataset de Kaggle.
+        kaggle_roots: Lista de rutas a directorios raíz de datasets de Kaggle.
         custom_root:  Ruta al directorio custom_dataset/ del proyecto.
 
     Returns:
@@ -252,31 +248,56 @@ def build_inventory(kaggle_root: Path | None, custom_root: Path) -> list[dict]:
     inventory = []
     fruit_to_idx   = {f: i for i, f in enumerate(FRUIT_CLASSES)}
     quality_to_idx = {q: i for i, q in enumerate(QUALITY_CLASSES)}
+    
+    # Mapeo de nombres en español (usados en dataset-frutas) a inglés (FRUIT_CLASSES)
+    es_to_en_map = {
+        "manzana": "Apple",
+        "banano": "Banana",
+        "guayaba": "Guava",
+        "limon": "Lime",
+        "naranja": "Orange",
+        "granada": "Pomegranate"
+    }
 
     # ── 1. Cargar desde Kaggle (Bueno y Malo) ──────────────────────────────
-    if kaggle_root is not None:
-        for kaggle_folder, quality_label in KAGGLE_QUALITY_MAP.items():
-            quality_dir = kaggle_root / kaggle_folder
-            if not quality_dir.exists():
-                print(f"[preprocess] ADVERTENCIA: carpeta no encontrada: {quality_dir}")
-                continue
-
-            for fruit_folder in sorted(quality_dir.iterdir()):
-                if not fruit_folder.is_dir():
+    for kaggle_root in kaggle_roots:
+        if kaggle_root is not None:
+            print(f"[preprocess] Explorando dataset en: {kaggle_root}")
+            for img_file in kaggle_root.rglob("*"):
+                if not img_file.is_file() or img_file.suffix.lower() not in (".jpg", ".jpeg", ".png"):
                     continue
-
-                # Extraer nombre de fruta quitando el sufijo de calidad
-                # Ej: "Apple_Bad" → "Apple", "Guava_Good" → "Guava"
-                raw_name = fruit_folder.name
-                fruit_name = raw_name.replace("_Bad", "").replace("_Good", "").strip()
-
-                if fruit_name not in FRUIT_CLASSES:
-                    print(f"[preprocess] Fruta no reconocida ignorada: {fruit_name}")
-                    continue
-
-                for img_file in fruit_folder.iterdir():
-                    if img_file.suffix.lower() not in (".jpg", ".jpeg", ".png"):
-                        continue
+                
+                path_parts = img_file.parts
+                quality_label = None
+                fruit_name = None
+                
+                # Buscar en los nombres de directorios/archivo para inferir clase y calidad
+                for part in reversed(path_parts):
+                    part_lower = part.lower()
+                    
+                    if not quality_label:
+                        if "good" in part_lower or "bueno" in part_lower:
+                            quality_label = "Bueno"
+                        elif "bad" in part_lower or "malo" in part_lower:
+                            quality_label = "Malo"
+                    
+                    if not fruit_name:
+                        # 1. Intentar hacer match directo con nombres en inglés
+                        for f in FRUIT_CLASSES:
+                            if f.lower() in part_lower:
+                                fruit_name = f
+                                break
+                        # 2. Intentar hacer match con el mapeo en español
+                        if not fruit_name:
+                            for es_name, en_name in es_to_en_map.items():
+                                if es_name in part_lower:
+                                    fruit_name = en_name
+                                    break
+                                
+                    if quality_label and fruit_name:
+                        break
+                        
+                if quality_label and fruit_name:
                     inventory.append({
                         "path":        str(img_file),
                         "fruit":       fruit_name,
@@ -433,15 +454,16 @@ class FruitDatasetBuilder:
           3. Balancea las clases si se requiere.
           4. Divide en train / val / test (70 / 15 / 15).
         """
-        kaggle_root  = find_kaggle_dataset_path()
+        kaggle_root_1 = find_kaggle_dataset_path("ryandpark/fruit-quality-classification")
+        kaggle_root_2 = find_kaggle_dataset_path("sebastiancos21/dataset-frutas")
         custom_root  = get_custom_dataset_path()
 
-        self.inventory_full = build_inventory(kaggle_root, custom_root)
+        self.inventory_full = build_inventory([kaggle_root_1, kaggle_root_2], custom_root)
 
         if len(self.inventory_full) == 0:
             raise RuntimeError(
                 "[preprocess] No se encontraron imágenes. "
-                "Descarga el dataset de Kaggle con download_dataset.py"
+                "Descarga los datasets con download_dataset.py"
             )
 
         if self.balance:

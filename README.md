@@ -31,64 +31,56 @@ El pipeline integra:
 
 | Fruta | Calidades Admitidas | Origen del Dataset |
 |---|---|---|
-| 🍎 **Manzana** (*Apple*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
-| 🍌 **Banano** (*Banana*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
-| 🍈 **Guayaba** (*Guava*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
-| 🍋 **Limón/Lima** (*Lime*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
-| 🍊 **Naranja** (*Orange*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
-| 🍎 **Granada** (*Pomegranate*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
+| **Manzana** (*Apple*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
+| **Banano** (*Banana*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
+| **Guayaba** (*Guava*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
+| **Limón/Lima** (*Lime*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
+| **Naranja** (*Orange*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
+| **Granada** (*Pomegranate*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
 
 >  **Extensibilidad**: El pipeline es completamente dinámico. Si el grupo coloca imágenes en `data/custom_dataset/Normal`, el preprocesamiento las detectará, balanceará y entrenará de forma transparente.
 
 ---
 
-## 📁 Estructura del Repositorio
+##  Estructura del Repositorio
 
 ```
 ProyectoFinalAPO3/
-├── 📂 src/
-│   ├── 📂 data/
+├── src/
+│   ├── data/
 │   │   ├── preprocess.py        # Pipeline de carga, extracción de HSV+HOG y PyTorch Datasets
 │   │   └── size_estimator.py    # Estimador geométrico y filtros de contorno OpenCV (PI3)
-│   ├── 📂 models/
+│   ├── models/
 │   │   ├── traditional_models.py # Definición de Random Forest y SVM
 │   │   └── cnn_model.py          # Arquitectura CNN Multi-Head en PyTorch
-│   ├── 📂 training/
+│   ├── training/
 │   │   ├── train_traditional.py  # GridSearchCV para RandomForest y SVM
 │   │   └── train_cnn.py          # Entrenamiento optimizado con ReduceLROnPlateau
-│   ├── 📂 evaluation/
+│   ├── evaluation/
 │   │   └── evaluate.py           # Generador de matrices de confusión, curvas y JSON final
-│   └── 📂 deployment/
+│   └── deployment/
 │       ├── app.py                # Servidor Flask + Socket.IO (Webcam + uploads en tiempo real)
-│       └── 📂 templates/
+│       └── templates/
 │           └── index.html        # Interfaz web interactiva en Glassmorphism y Faja Animada
-├── 📂 data/
-│   └── 📂 custom_dataset/        # Carpeta para imágenes locales del grupo (Bueno / Malo / Normal)
-├── 📂 docs/
+├── data/
+│   └── custom_dataset/        # Carpeta para imágenes locales del grupo (Bueno / Malo / Normal)
+├── docs/
 │   ├── math_formulation.md       # Soporte matemático y ecuaciones (PI3)
 │   └── ethics_report.md          # Análisis ético e impacto tecnológico (PI1 / PI2)
-├── 📂 notebooks/
+├── notebooks/
 │   └── 01_eda.ipynb              # Notebook interactivo de Análisis Exploratorio de Datos (EDA)
-├── 📂 experiments/
-│   ├── 📂 logs/                  # Registro histórico de entrenamiento CSV de la CNN
-│   ├── 📂 checkpoints/           # Modelos óptimos guardados (.joblib y .pth)
-│   └── 📂 results/               # Matrices de confusión vectoriales, curvas de pérdida y JSON comparativo
-├── 📜 main.py                    # Punto de entrada principal (Train, Evaluate, Deploy)
-├── 📜 requirements.txt           # Dependencias requeridas
-└── 📜 pasos.md                   # Hoja de ruta del proyecto y estado de completitud
+├── experiments/
+│   ├── logs/                  # Registro histórico de entrenamiento CSV de la CNN
+│   ├── checkpoints/           # Modelos óptimos guardados (.joblib y .pth)
+│   └── results/               # Matrices de confusión vectoriales, curvas de pérdida y JSON comparativo
+├── main.py                    # Punto de entrada principal (Train, Evaluate, Deploy)
+├── requirements.txt           # Dependencias requeridas
+└── pasos.md                   # Hoja de ruta del proyecto y estado de completitud
 ```
 
 ---
 
-## ⚙️ Instalación
-
-### 1. Clonar el repositorio
-```bash
-git clone https://github.com/tu-usuario/ProyectoFinalAPO3.git
-cd ProyectoFinalAPO3
-```
-
-### 2. Instalar dependencias
+### 1. Instalar dependencias
 Asegúrate de usar Python 3.10 o superior (el proyecto es compatible hasta Python 3.14). Ejecuta:
 ```bash
 pip install -r requirements.txt
@@ -99,7 +91,7 @@ pip install -r requirements.txt
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
 ```
 
-### 3. Descargar el dataset de Kaggle
+### 2. Descargar el dataset de Kaggle
 El sistema automatiza la descarga usando la biblioteca `kagglehub`. Si no lo tienes en caché, la primera ejecución de `main.py` lo descargará automáticamente. Opcionalmente, puedes descargarlo de forma manual ejecutando:
 ```bash
 python download_dataset.py
@@ -108,9 +100,9 @@ El dataset original se guardará en `~/.cache/kagglehub/datasets/ryandpark/fruit
 
 ---
 
-## 🚀 Modos de Uso
+## Modos de Uso
 
-El script unificado [main.py](file:///c:/Users/scosb/OneDrive/Desktop/Universidad/APO_III/Proyecto/ProyectoFinalAPO3/main.py) permite controlar todas las etapas del pipeline desde la terminal:
+El script unificado [main.py]permite controlar todas las etapas del pipeline desde la terminal:
 
 ### A. Modo Entrenamiento (`train`)
 Entrena todos los modelos desde cero. Sintoniza los hiperparámetros de RandomForest y SVM, y luego entrena la CNN Multi-Head:
@@ -142,14 +134,11 @@ python main.py --mode evaluate
 
 ### C. Modo Despliegue (`deploy`)
 Lanza la aplicación web interactiva local de Flask en el puerto `5000`:
-```bash
-python main.py --mode deploy
-```
-*Si deseas cambiar el puerto por defecto (por ejemplo, al 8080), utiliza:*
+
 ```bash
 python main.py --mode deploy --port 8080
 ```
-Abre en tu navegador favorito: `http://localhost:5000` (o el puerto configurado).
+Abre en tu navegador: `http://localhost:5000`.
 
 ---
 
@@ -196,7 +185,7 @@ Se calculó previamente la media ($\mu$) y desviación estándar ($\sigma$) del 
 *   **Grande**: $D_{\text{norm}} > \mu + 0.75\sigma$
 
 ### 3. Filtro Geométrico OOD
-Para rechazar objetos que no son frutas, el módulo [size_estimator.py](file:///c:/Users/scosb/OneDrive/Desktop/Universidad/APO_III/Proyecto/ProyectoFinalAPO3/src/data/size_estimator.py) analiza los contornos:
+Para rechazar objetos que no son frutas, el módulo [size_estimator.py] analiza los contornos:
 *   Si el área detectada es inferior a un umbral mínimo o superior a un máximo, se rechaza.
 *   Si la excentricidad del objeto (relación de aspecto) es muy alargada (no cumple con la forma circular/ovalada esperada en una fruta), se marca como **No es Fruta** y la faja transportadora se detiene con alarma en la interfaz.
 
@@ -229,7 +218,7 @@ La aplicación web construida con Flask y Socket.IO destaca por su diseño premi
 
 ---
 
-## 👥 Equipo de Trabajo
+## Equipo de Trabajo
 
 | Nombre Completo | GitHub |
 |---|---|
