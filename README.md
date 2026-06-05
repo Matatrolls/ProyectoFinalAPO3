@@ -29,14 +29,12 @@ El pipeline integra:
 
 ##  Frutas Soportadas
 
-| Fruta | Calidades Admitidas | Origen del Dataset |
-|---|---|---|
-| **Manzana** (*Apple*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
-| **Banano** (*Banana*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
-| **Guayaba** (*Guava*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
-| **Limón/Lima** (*Lime*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
-| **Naranja** (*Orange*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
-| **Granada** (*Pomegranate*) | Bueno / Malo / Normal | Kaggle + Custom Dataset |
+*   **Manzana** (*Apple*): Calidades Bueno / Malo / Normal (Kaggle + Custom Dataset)
+*   **Banano** (*Banana*): Calidades Bueno / Malo / Normal (Kaggle + Custom Dataset)
+*   **Guayaba** (*Guava*): Calidades Bueno / Malo / Normal (Kaggle + Custom Dataset)
+*   **Limón/Lima** (*Lime*): Calidades Bueno / Malo / Normal (Kaggle + Custom Dataset)
+*   **Naranja** (*Orange*): Calidades Bueno / Malo / Normal (Kaggle + Custom Dataset)
+*   **Granada** (*Pomegranate*): Calidades Bueno / Malo / Normal (Kaggle + Custom Dataset)
 
 >  **Extensibilidad**: El pipeline es completamente dinámico. Si el grupo coloca imágenes en `data/custom_dataset/Normal`, el preprocesamiento las detectará, balanceará y entrenará de forma transparente.
 
@@ -133,12 +131,12 @@ python main.py --mode evaluate
 ```
 
 ### C. Modo Despliegue (`deploy`)
-Lanza la aplicación web interactiva local de Flask en el puerto `5000`:
+Lanza la aplicación web interactiva local de Flask en el puerto `8080`:
 
 ```bash
 python main.py --mode deploy --port 8080
 ```
-Abre en tu navegador: `http://localhost:5000`.
+Abre en tu navegador: `http://localhost:8080`.
 
 ---
 
@@ -191,15 +189,11 @@ Para rechazar objetos que no son frutas, el módulo [size_estimator.py] analiza 
 
 ---
 
-##  Tabla Comparativa de Resultados en Test
-
 El conjunto de prueba independiente cuenta con **2037 imágenes**. A continuación se detallan las métricas comparativas obtenidas por cada modelo:
 
-| Modelo | Exactitud Fruta (Fruit Acc) | Exactitud Calidad (Quality Acc) | Tasa de Rechazo (OOD < 70%) |
-|---|---|---|---|
-|  **Random Forest** | **94.55%** | **96.86%** | 48.94% |
-|  **SVM (RBF Kernel)** | 90.53% | 95.58% | **22.14%** |
-|  **CNN Multi-Head** | 68.48% | 88.22% | 42.22% |
+*   **Random Forest**: Exactitud Fruta: **94.55%**, Exactitud Calidad: **96.86%**, Tasa de Rechazo (OOD < 70%): 48.94%
+*   **SVM (RBF Kernel)**: Exactitud Fruta: 90.53%, Exactitud Calidad: 95.58%, Tasa de Rechazo (OOD < 70%): **22.14%**
+*   **CNN Multi-Head**: Exactitud Fruta: 68.48%, Exactitud Calidad: 88.22%, Tasa de Rechazo (OOD < 70%): 42.22%
 
 *Interpretación de resultados:*
 *   Los modelos tradicionales de ML (Random Forest y SVM) que combinan histogramas HSV y descriptores HOG obtuvieron puntuaciones de clasificación sobresalientes debido a la naturaleza de fondo uniforme y controlado del dataset.
@@ -220,11 +214,9 @@ La aplicación web construida con Flask y Socket.IO destaca por su diseño premi
 
 ## Equipo de Trabajo
 
-| Nombre Completo | GitHub |
-|---|---|
-| [Sebastian Cosme Benitez] | [SebCos21] |
-| [Rodolfo Morneo Gutierrez] | [Matatrolls] |
-| [Nicolas Gongora Rincon] | [itsnigori98] |
-| [Alejandro Quinones Caicedo] | [Legnatbird] |
+*   **Sebastian Cosme Benitez** (GitHub: [SebCos21])
+*   **Rodolfo Morneo Gutierrez** (GitHub: [Matatrolls])
+*   **Nicolas Gongora Rincon** (GitHub: [itsnigori98])
+*   **Alejandro Quinones Caicedo** (GitHub: [Legnatbird])
 
 *   **Asignatura**: Algoritmos y Programación III (APO III) - Universidad Icesi.

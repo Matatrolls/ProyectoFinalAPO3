@@ -1,17 +1,17 @@
 {
     "random_forest": {
-        "accuracy_fruit": 0.9455081001472754,
-        "accuracy_quality": 0.9685812469317624,
-        "rejection_rate": 48.9445262641139
+        "accuracy_fruit": 0.9425790754257908,
+        "accuracy_quality": 0.9683698296836983,
+        "rejection_rate": 50.17031630170317
     },
     "svm": {
-        "accuracy_fruit": 0.905252822778596,
-        "accuracy_quality": 0.9558173784977909,
-        "rejection_rate": 22.140402552773686
+        "accuracy_fruit": 0.945985401459854,
+        "accuracy_quality": 0.9746958637469586,
+        "rejection_rate": 8.856447688564472
     },
     "cnn": {
-        "accuracy_fruit": 0.6848306332842415,
-        "accuracy_quality": 0.882179675994109,
-        "rejection_rate": 42.21894943544429
+        "accuracy_fruit": 0.8282238442822385,
+        "accuracy_quality": 0.9240875912408759,
+        "rejection_rate": 33.57664233576643
     }
 }

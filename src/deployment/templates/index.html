@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clasificador de Calidad de Frutas y Faja Simuladora</title>
+    <title>Clasificador de Calidad de Frutas en Tiempo Real</title>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -332,245 +332,18 @@
             gap: 24px;
         }
 
-        .conveyor-container {
-            position: relative;
-            height: 380px;
-            border-radius: var(--card-radius);
-            overflow: hidden;
-            background: #11121b;
-            border: 1px solid var(--border-glass);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 20px;
-        }
-
-        /* Alarma de OOD */
-        .alarm-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(239, 68, 68, 0.15);
-            border: 4px solid var(--danger);
-            z-index: 10;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            animation: flash 1s infinite alternate;
-        }
-
-        .alarm-box {
-            background: var(--bg-primary);
-            border: 2px solid var(--danger);
-            padding: 20px 40px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 0 30px var(--danger-glow);
-        }
-
-        .alarm-box h3 {
-            color: var(--danger);
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-
-        .alarm-box p {
-            color: var(--text-primary);
-            font-size: 14px;
-        }
-
-        @keyframes flash {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .conveyor-belt {
-            position: relative;
-            width: 100%;
-            height: 80px;
-            background: #252836;
-            margin-top: 100px;
-            border-radius: 8px;
-            box-shadow: inset 0 4px 10px rgba(0,0,0,0.5), 0 4px 15px rgba(0,0,0,0.4);
-            border-top: 4px solid #3f4357;
-            border-bottom: 4px solid #3f4357;
-            overflow: visible;
-        }
-
-        .belt-rollers {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 20px;
-            align-items: center;
-            z-index: 1;
-            pointer-events: none;
-        }
-
-        .roller {
-            width: 12px;
-            height: 12px;
-            background: #4e536c;
-            border-radius: 50%;
-            border: 2px solid #1a1b24;
-            animation: spin 1s linear infinite;
-        }
-
-        .conveyor-belt.halted .roller {
-            animation-play-state: paused;
-        }
-
-        @keyframes spin {
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Elemento Fruta en la Faja */
-        .fruit-item {
-            position: absolute;
-            left: -60px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 50px;
-            height: 50px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 36px;
-            z-index: 5;
-            transition: transform 0.5s ease;
-        }
-
-        /* Movimiento de faja */
-        @keyframes conveyorMove {
-            0% { left: -60px; }
-            45% { left: 45%; } /* Punto de escaneo */
-            55% { left: 45%; }
-            100% { left: 105%; }
-        }
-
-        /* Escáner */
-        .scanner-unit {
-            position: absolute;
-            left: 45%;
-            top: 40px;
-            width: 60px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 8;
-        }
-
-        .scanner-device {
-            width: 50px;
-            height: 30px;
-            background: #3a3b4c;
-            border-radius: 6px;
-            border: 2px solid var(--border-glass);
-            position: relative;
-        }
-
-        .scanner-device::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 16px;
-            height: 8px;
-            background: #ef4444;
-            border-radius: 4px;
-        }
-
-        .scanner-laser {
-            width: 2px;
-            height: 110px;
-            background: rgba(239, 68, 68, 0.7);
-            box-shadow: 0 0 12px 3px rgba(239, 68, 68, 0.8);
-            transform-origin: top;
-            animation: laserSweep 1.5s infinite alternate ease-in-out;
-            display: none;
-        }
-
-        .scanner-laser.active {
-            display: block;
-        }
-
-        @keyframes laserSweep {
-            0% { transform: scaleX(1) rotate(-15deg); }
-            100% { transform: scaleX(1) rotate(15deg); }
-        }
-
-        /* Brazos mecánicos / Desvíos */
-        .sorting-bin-container {
-            display: flex;
-            justify-content: space-around;
-            width: 100%;
-            margin-top: 20px;
+        /* --- Panel de Estadísticas y Control --- */
+        .stat-card-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
             gap: 16px;
-            z-index: 5;
         }
 
-        .sorting-bin {
-            flex: 1;
-            height: 85px;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border: 1px solid var(--border-glass);
-            font-size: 13px;
-            transition: all 0.3s ease;
-            position: relative;
+        @media (max-width: 768px) {
+            .stat-card-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
-
-        .sorting-bin.good {
-            background: rgba(16, 185, 129, 0.08);
-            border-color: rgba(16, 185, 129, 0.2);
-            color: var(--success);
-        }
-        .sorting-bin.good.active {
-            background: rgba(16, 185, 129, 0.2);
-            box-shadow: 0 0 15px var(--success-glow);
-        }
-
-        .sorting-bin.bad {
-            background: rgba(239, 68, 68, 0.08);
-            border-color: rgba(239, 68, 68, 0.2);
-            color: var(--danger);
-        }
-        .sorting-bin.bad.active {
-            background: rgba(239, 68, 68, 0.2);
-            box-shadow: 0 0 15px var(--danger-glow);
-        }
-
-        .sorting-bin.normal {
-            background: rgba(245, 158, 11, 0.08);
-            border-color: rgba(245, 158, 11, 0.2);
-            color: var(--warning);
-        }
-        .sorting-bin.normal.active {
-            background: rgba(245, 158, 11, 0.2);
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
-        }
-
-        .sorting-bin span.title {
-            font-weight: 600;
-            font-family: 'Outfit', sans-serif;
-            font-size: 14px;
-            margin-bottom: 4px;
-        }
-
-        .sorting-bin span.count {
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        /* --- Panel Inferior de Estadísticas --- */
         .bottom-panel {
             display: grid;
             grid-template-columns: 1fr 1.2fr;
@@ -681,6 +454,14 @@
                     <option value="random_forest">Random Forest (Tabular HSV+HOG)</option>
                 </select>
             </div>
+            
+            <!-- Deslizador de Umbral OOD de Confianza -->
+            <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-glass); border: 1px solid var(--border-glass); padding: 8px 12px; border-radius: 8px; backdrop-filter: blur(10px);">
+                <span style="font-size: 11px; color: var(--text-secondary); white-space: nowrap; font-weight: 500;">Confianza Mín:</span>
+                <input type="range" id="threshold-range" min="10" max="95" step="5" value="40" style="cursor: pointer; accent-color: var(--primary); width: 80px;" oninput="updateThresholdLabel(this.value)">
+                <span id="threshold-val" style="font-size: 11px; font-weight: 600; min-width: 28px; text-align: right; color: var(--text-primary);">40%</span>
+            </div>
+            
             <div class="status-badge">
                 <div class="dot"></div>
                 <span>CONECTADO AL SISTEMA</span>
@@ -698,9 +479,17 @@
                     <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
                     Cámara de Inspección
                 </h3>
+
+                <!-- Selector de Cámara -->
+                <div class="select-wrapper" style="margin-bottom: 12px; width: 100%;">
+                    <select id="camera-select" style="width: 100%;" onchange="switchCamera()">
+                        <option value="">Cargando cámaras...</option>
+                    </select>
+                </div>
                 
                 <div class="media-container">
-                    <video id="webcam" autoplay playsinline muted></video>
+                    <video id="webcam" autoplay playsinline muted style="display: none;"></video>
+                    <canvas id="webcam-canvas" style="width: 100%; height: 100%; object-fit: cover; display: none;"></canvas>
                     <img id="preview-img" class="hidden" alt="Vista previa de carga">
                     
                     <div class="webcam-overlay" id="webcam-prompt">
@@ -708,14 +497,27 @@
                     </div>
                 </div>
                 
-                <label for="file-input" class="file-upload-btn">
-                    📁 O Subir Imagen Manualmente
-                </label>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <button id="btn-analyze" onclick="triggerWebcamAnalysis()" class="file-upload-btn" style="flex: 1; border: 1px solid var(--success); color: #FFF; background: var(--success); cursor: pointer; display: none; font-weight: 600; margin-top: 0;">
+                        🔍 Analizar
+                    </button>
+                    <label for="file-input" class="file-upload-btn" style="flex: 1; text-align: center; margin-top: 0;">
+                        📁 Subir Imagen
+                    </label>
+                    <button id="btn-reactivate-cam" onclick="reactivateCamera()" class="file-upload-btn" style="flex: 1; border: 1px solid var(--primary); color: #FFF; background: var(--primary); cursor: pointer; display: none; font-weight: 600; margin-top: 0;">
+                        📷 Usar Cámara
+                    </button>
+                </div>
                 <input type="file" id="file-input" accept="image/*">
             </div>
 
             <div class="glass-card">
                 <h3 class="section-title">Resultados del Escaneo</h3>
+
+                <!-- Contenedor del enfoque anotado (cuadrícula/cajas) -->
+                <div id="annotated-result-container" style="width: 100%; aspect-ratio: 4/3; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid var(--border-glass); margin-bottom: 16px; display: none;">
+                    <img id="annotated-result-img" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
                 
                 <div class="result-details">
                     <div class="result-row">
@@ -746,97 +548,51 @@
             </div>
         </div>
 
-        <!-- Columna Derecha: Faja Simuladora y Gráficos -->
+        <!-- Columna Derecha: Estadísticas y Gráficos -->
         <div class="main-panel">
-            <!-- Simulador de Faja -->
-            <div class="glass-card conveyor-container">
-                <h3 class="section-title">
-                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-                    Simulador de Faja Clasificadora en Tiempo Real
-                </h3>
-
-                <!-- Alarma OOD -->
-                <div class="alarm-overlay" id="alarm-overlay">
-                    <div class="alarm-box">
-                        <h3>⚠️ FAJA DETENIDA</h3>
-                        <p id="alarm-msg">Objeto desconocido o anomalía de confianza detectada en la zona de escáner.</p>
-                        <button class="conveyor-controls" onclick="resetAlarm()" style="margin-top: 15px; width: 100%;">Reanudar Faja</button>
-                    </div>
+            <!-- Tarjetas métricas -->
+            <div class="stat-card-grid">
+                <div class="metric-card">
+                    <span class="title">Total Escaneados</span>
+                    <span class="number blue" id="metric-total">0</span>
                 </div>
-
-                <!-- Escáner superior -->
-                <div class="scanner-unit">
-                    <div class="scanner-device"></div>
-                    <div class="scanner-laser" id="laser"></div>
+                <div class="metric-card">
+                    <span class="title">Aceptados (Buenos)</span>
+                    <span class="number green" id="metric-good">0</span>
                 </div>
-
-                <!-- Banda -->
-                <div class="conveyor-belt" id="belt">
-                    <div class="belt-rollers">
-                        <div class="roller"></div>
-                        <div class="roller"></div>
-                        <div class="roller"></div>
-                        <div class="roller"></div>
-                        <div class="roller"></div>
-                        <div class="roller"></div>
-                        <div class="roller"></div>
-                    </div>
-                    
-                    <!-- Contenedor donde se animarán las frutas -->
-                    <div id="fruit-target"></div>
+                <div class="metric-card">
+                    <span class="title">Clase Regular (Normal)</span>
+                    <span class="number orange" id="metric-normal">0</span>
                 </div>
-
-                <!-- Contenedores de Destino / Clasificadores -->
-                <div class="sorting-bin-container">
-                    <div class="sorting-bin good" id="bin-good">
-                        <span class="title">Bandeja: BUENO ✅</span>
-                        <span class="count" id="count-good">0</span>
-                    </div>
-                    <div class="sorting-bin normal" id="bin-normal">
-                        <span class="title">Bandeja: NORMAL ⚠️</span>
-                        <span class="count" id="count-normal">0</span>
-                    </div>
-                    <div class="sorting-bin bad" id="bin-bad">
-                        <span class="title">Bandeja: DESCARTE ❌</span>
-                        <span class="count" id="count-bad">0</span>
-                    </div>
-                </div>
-
-                <!-- Controles del simulador -->
-                <div class="conveyor-controls">
-                    <button class="primary" onclick="spawnSimulatedFruit()">Clasificar Fruta Aleatoria</button>
-                    <button onclick="clearSimulation()">Reiniciar Contadores</button>
+                <div class="metric-card">
+                    <span class="title">Descartados (Malos/OOD)</span>
+                    <span class="number red" id="metric-bad">0</span>
                 </div>
             </div>
 
-            <!-- Bottom Panel: Estadísticas en vivo -->
             <div class="bottom-panel">
-                <!-- Tarjetas métricas -->
-                <div class="stat-card-grid">
-                    <div class="metric-card">
-                        <span class="title">Total Escaneados</span>
-                        <span class="number blue" id="metric-total">0</span>
-                    </div>
-                    <div class="metric-card">
-                        <span class="title">Aceptados (Buenos)</span>
-                        <span class="number green" id="metric-good">0</span>
-                    </div>
-                    <div class="metric-card">
-                        <span class="title">Clase Regular (Normal)</span>
-                        <span class="number orange" id="metric-normal">0</span>
-                    </div>
-                    <div class="metric-card">
-                        <span class="title">Descartados (Malos/OOD)</span>
-                        <span class="number red" id="metric-bad">0</span>
-                    </div>
-                </div>
-
                 <!-- Gráfico de distribución de frutas por tipo -->
                 <div class="glass-card">
-                    <h3 class="section-title" style="font-size:16px;">Distribución de Frutas Escaneadas</h3>
+                    <h3 class="section-title" style="font-size:16px;">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        Distribución de Frutas Escaneadas
+                    </h3>
                     <div class="chart-container">
                         <canvas id="barChart"></canvas>
                     </div>
+                </div>
+
+                <!-- Tarjeta de Controles de Limpieza -->
+                <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+                    <div>
+                        <h3 class="section-title" style="font-size:16px;">Panel de Control</h3>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-top: 10px; line-height: 1.5;">
+                            Este panel registra las estadísticas acumuladas desde la webcam y los archivos cargados. Si desea reiniciar el conteo y vaciar las estadísticas, use el botón a continuación.
+                        </p>
+                    </div>
+                    <button class="file-upload-btn" onclick="clearCounters()" style="width: 100%; border-style: solid; border-color: var(--danger); color: var(--danger); background: rgba(239, 68, 68, 0.05); margin-top: 20px; font-weight: 600;">
+                        🗑️ Reiniciar Estadísticas
+                    </button>
                 </div>
             </div>
         </div>
@@ -848,25 +604,21 @@
     // Variables globales
     let socket;
     let webcamActive = false;
-    let cameraInterval = null;
     let video = document.getElementById('webcam');
     let previewImg = document.getElementById('preview-img');
     let modelSelect = document.getElementById('model-select');
-    
-    // Contadores del simulador
+    let isProcessing = false; // Guard para evitar acumular frames en servidor lento
+
+    // Elementos de Canvas en Vivo
+    let canvas = document.getElementById('webcam-canvas');
+    let canvasCtx = canvas.getContext('2d');
+    let latestDetections = [];
+    let streamInterval = null;
+
+    // Contadores de escaneo en tiempo real
     let counts = { good: 0, normal: 0, bad: 0, total: 0 };
     let fruitCounts = { Apple: 0, Banana: 0, Guava: 0, Lime: 0, Orange: 0, Pomegranate: 0 };
     
-    // Emojis de frutas
-    const FRUIT_EMOJIS = {
-        Apple: '🍎',
-        Banana: '🍌',
-        Guava: '🥝', // Aproximación
-        Lime: '🍋',
-        Orange: '🍊',
-        Pomegranate: '🍎' // Pomegranate
-    };
-
     // Conectar Socket.IO
     socket = io();
 
@@ -875,45 +627,252 @@
     });
 
     socket.on('prediction_result', (data) => {
-        updateDiagnosticPanel(data);
-        handlePredictionInSimulation(data);
+        isProcessing = false; // Liberar candado
+        if (!webcamActive) return; // Ignorar si la cámara no está activa
+
+        // Guardar detecciones en tiempo real para el dibujado continuo
+        if (data.detections) {
+            latestDetections = data.detections;
+        } else {
+            latestDetections = [];
+        }
+
+        // Si es un análisis formal (al hacer clic en "Analizar"), registrar estadísticas
+        if (data.is_formal) {
+            updateDiagnosticPanel(data);
+
+            // Mostrar la imagen anotada en el panel de resultados
+            if (data.annotated_image) {
+                const container = document.getElementById('annotated-result-container');
+                const img = document.getElementById('annotated-result-img');
+                img.src = data.annotated_image;
+                container.style.display = 'block';
+            }
+
+            registerScanResult(data);
+
+            // Destello verde de éxito para confirmar guardado
+            const resultsCard = document.getElementById('annotated-result-container').parentElement;
+            resultsCard.style.transition = 'all 0.3s ease';
+            resultsCard.style.boxShadow = '0 0 20px rgba(16, 185, 129, 0.4)';
+            resultsCard.style.borderColor = 'var(--success)';
+            setTimeout(() => {
+                resultsCard.style.boxShadow = '0 8px 32px 0 rgba(0, 0, 0, 0.37)';
+                resultsCard.style.borderColor = 'var(--border-glass)';
+            }, 600);
+        }
     });
 
-    // --- Control de la Cámara ---
-    function startWebcam() {
-        document.getElementById('webcam-prompt').style.display = 'none';
-        previewImg.classList.add('hidden');
-        video.style.display = 'block';
+    // --- Bucle de Dibujo Canvas a 30 FPS ---
+    function drawFrame() {
+        if (!webcamActive) return;
 
-        navigator.mediaDevices.getUserMedia({ video: { width: 320, height: 240 } })
-            .then(stream => {
-                video.srcObject = stream;
-                webcamActive = true;
-                
-                // Empezar a enviar frames cada 350ms
-                cameraInterval = setInterval(sendFrame, 350);
-            })
-            .catch(err => {
-                console.error("Error al acceder a la cámara:", err);
-                alert("No se pudo iniciar la cámara.");
-                document.getElementById('webcam-prompt').style.display = 'flex';
-            });
+        // Pintar el video de la cámara en el canvas
+        canvasCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // Dibujar recuadros y etiquetas encima del canvas
+        latestDetections.forEach(det => {
+            if (!det.box) return;
+            const [x, y, bw, bh] = det.box;
+
+            // Selección de color premium
+            let color = '#9ca3af'; // Gris default
+            const fruit = det.fruit;
+            if (fruit === 'Apple') color = '#10b981';      // Verde neón
+            else if (fruit === 'Banana') color = '#eab308'; // Amarillo
+            else if (fruit === 'Orange') color = '#f97316'; // Naranja
+            else if (fruit === 'Lime') color = '#22c55e';   // Verde limón
+            else if (fruit === 'Guava') color = '#86efac';  // Verde suave
+            else if (fruit === 'Pomegranate') color = '#ef4444'; // Rojo
+
+            // Dibujar caja contenedora
+            canvasCtx.strokeStyle = color;
+            canvasCtx.lineWidth = 2.5;
+            canvasCtx.strokeRect(x, y, bw, bh);
+
+            // Traducir etiqueta al español
+            const fruitTranslations = {
+                "Apple": "MANZANA",
+                "Banana": "BANANA",
+                "Orange": "NARANJA",
+                "Lime": "LIMON",
+                "Guava": "GUAYABA",
+                "Pomegranate": "GRANADA"
+            };
+            const fruitLabelEs = fruitTranslations[fruit] || "DESCONOCIDO";
+            const labelText = `${fruitLabelEs} ${Math.round(det.confidence_fruit * 100)}%`;
+
+            canvasCtx.font = 'bold 10px Inter, sans-serif';
+            const textWidth = canvasCtx.measureText(labelText).width;
+
+            // Dibujar banner de la etiqueta
+            canvasCtx.fillStyle = color;
+            canvasCtx.fillRect(x, y - 18, textWidth + 10, 18);
+
+            // Escribir texto de la etiqueta
+            canvasCtx.fillStyle = '#ffffff';
+            canvasCtx.fillText(labelText, x + 5, y - 5);
+        });
+
+        requestAnimationFrame(drawFrame);
     }
 
-    function sendFrame() {
+    // --- Pipeline de Envío en Segundo Plano ---
+    function startStreaming() {
+        if (streamInterval) clearInterval(streamInterval);
+        streamInterval = setInterval(() => {
+            if (!webcamActive || isProcessing) return;
+
+            // Capturar frame de baja calidad para la GPU
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = 320;
+            tempCanvas.height = 240;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+            const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.75);
+            const thresholdVal = parseFloat(document.getElementById('threshold-range').value) / 100.0;
+
+            isProcessing = true;
+            socket.emit('video_frame', {
+                image: dataUrl,
+                model: modelSelect.value,
+                threshold: thresholdVal,
+                is_formal: false
+            });
+        }, 400);
+    }
+
+    function stopStreaming() {
+        if (streamInterval) {
+            clearInterval(streamInterval);
+            streamInterval = null;
+        }
+    }
+
+    // --- Actualizar Texto de Umbral Slider ---
+    function updateThresholdLabel(value) {
+        document.getElementById('threshold-val').innerText = value + '%';
+    }
+
+    // --- Enumerar Dispositivos de Cámara ---
+    async function populateCameraList() {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            const select = document.getElementById('camera-select');
+            select.innerHTML = '';
+            
+            if (videoDevices.length === 0) {
+                const opt = document.createElement('option');
+                opt.value = "";
+                opt.text = "No se encontraron cámaras";
+                select.appendChild(opt);
+                return;
+            }
+
+            videoDevices.forEach((device, index) => {
+                const opt = document.createElement('option');
+                opt.value = device.deviceId;
+                opt.text = device.label || `Cámara ${index + 1}`;
+                select.appendChild(opt);
+            });
+        } catch (err) {
+            console.error("Error al enumerar dispositivos de video:", err);
+        }
+    }
+
+    async function switchCamera() {
         if (!webcamActive) return;
         
-        const canvas = document.createElement('canvas');
-        canvas.width = 128;
-        canvas.height = 128;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        stopStreaming();
+        latestDetections = [];
         
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+        }
         
+        await startWebcam();
+    }
+
+    // --- Control de la Cámara ---
+    async function startWebcam() {
+        document.getElementById('webcam-prompt').style.display = 'none';
+        previewImg.classList.add('hidden');
+        
+        // Mostrar Canvas en lugar de Video para dibujar overlays
+        video.style.display = 'none';
+        canvas.style.display = 'block';
+        
+        document.getElementById('btn-analyze').style.display = 'block'; // Mostrar botón Analizar
+        document.getElementById('btn-reactivate-cam').style.display = 'none'; // Ocultar usar cámara
+
+        const cameraSelect = document.getElementById('camera-select');
+        const deviceId = cameraSelect.value;
+        
+        const constraints = {
+            video: deviceId ? { deviceId: { exact: deviceId }, width: 320, height: 240 } : { width: 320, height: 240 }
+        };
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            video.srcObject = stream;
+            webcamActive = true;
+
+            // Sincronizar dimensiones
+            canvas.width = 320;
+            canvas.height = 240;
+            
+            // Iniciar bucle del Canvas a 30 FPS
+            requestAnimationFrame(drawFrame);
+
+            // Iniciar transmisión pasiva a Socket.IO
+            startStreaming();
+            
+            // Volver a enumerar cámaras para obtener nombres reales después de tener permisos
+            await populateCameraList();
+            
+            // Restaurar la selección al valor previo o al track actual
+            if (deviceId) {
+                cameraSelect.value = deviceId;
+            } else {
+                const activeTrack = stream.getVideoTracks()[0];
+                if (activeTrack) {
+                    const settings = activeTrack.getSettings();
+                    if (settings && settings.deviceId) {
+                        cameraSelect.value = settings.deviceId;
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Error al acceder a la cámara:", err);
+            alert("No se pudo iniciar la cámara.");
+            document.getElementById('webcam-prompt').style.display = 'flex';
+            document.getElementById('btn-analyze').style.display = 'none';
+            canvas.style.display = 'none';
+        }
+    }
+
+    function triggerWebcamAnalysis() {
+        if (!webcamActive) return;
+
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = 320;
+        tempCanvas.height = 240;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
+
+        const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.85);
+        const thresholdVal = parseFloat(document.getElementById('threshold-range').value) / 100.0;
+
+        document.getElementById('res-fruit').innerText = "Analizando...";
+
+        // Emitir frame marcado como formal
         socket.emit('video_frame', {
             image: dataUrl,
-            model: modelSelect.value
+            model: modelSelect.value,
+            threshold: thresholdVal,
+            is_formal: true
         });
     }
 
@@ -926,24 +885,32 @@
         // Desactivar cámara si estaba activa
         if (webcamActive) {
             webcamActive = false;
-            clearInterval(cameraInterval);
+            stopStreaming();
+            latestDetections = [];
             if (video.srcObject) {
                 video.srcObject.getTracks().forEach(track => track.stop());
             }
             video.style.display = 'none';
+            canvas.style.display = 'none';
         }
+        document.getElementById('btn-analyze').style.display = 'none'; // Ocultar analizar webcam
+        document.getElementById('annotated-result-container').style.display = 'none'; // Ocultar resultado anterior de webcam
 
-        // Mostrar vista previa
+        // Mostrar vista previa y botón de reactivar cámara
         const reader = new FileReader();
         reader.onload = (event) => {
             previewImg.src = event.target.result;
             previewImg.classList.remove('hidden');
             document.getElementById('webcam-prompt').style.display = 'none';
+            document.getElementById('btn-reactivate-cam').style.display = 'block';
+            
+            const thresholdVal = parseFloat(document.getElementById('threshold-range').value) / 100.0;
             
             // Enviar la imagen mediante AJAX predict
             const formData = new FormData();
             formData.append('image', file);
             formData.append('model', modelSelect.value);
+            formData.append('threshold', thresholdVal);
 
             fetch('/predict', {
                 method: 'POST',
@@ -952,11 +919,38 @@
             .then(res => res.json())
             .then(data => {
                 updateDiagnosticPanel(data);
-                handlePredictionInSimulation(data);
+                registerScanResult(data);
+                if (data.annotated_image) {
+                    previewImg.src = data.annotated_image; // Reemplazar con la imagen con recuadro de enfoque
+                }
             })
-            .catch(err => console.error("Error al enviar imagen:", err));
+            .catch(err => {
+                console.error("Error al enviar imagen:", err);
+            });
         };
         reader.readAsDataURL(file);
+        
+        // Limpiar el valor del input para poder subir el mismo archivo consecutivamente si se desea
+        fileInput.value = "";
+    });
+
+    function reactivateCamera() {
+        // Ocultar vista previa manual y limpiar su src
+        previewImg.classList.add('hidden');
+        previewImg.src = "";
+        
+        // Ocultar botón de reactivación y prompt de cámara
+        document.getElementById('btn-reactivate-cam').style.display = 'none';
+        document.getElementById('webcam-prompt').style.display = 'none';
+        document.getElementById('annotated-result-container').style.display = 'none'; // Ocultar resultado anotado anterior
+        
+        // startWebcam se encargará de mostrar canvas e iniciar render
+        startWebcam();
+    }
+
+    // Intentar enumerar dispositivos al cargar la página
+    window.addEventListener('DOMContentLoaded', () => {
+        populateCameraList();
     });
 
     // --- Actualizar Panel de Resultados ---
@@ -984,174 +978,47 @@
         document.getElementById('res-conf-q').innerText = (data.confidence_quality * 100).toFixed(1) + "%";
     }
 
-    // --- Simulación de la Faja Clasificadora ---
-    let simulationActive = true;
-    let currentMovingFruit = null;
-
-    // Lista de frutas simuladas para el spawn aleatorio
-    const SIM_FRUITS = ['Apple', 'Banana', 'Lime', 'Orange', 'Pomegranate'];
-    const SIM_QUALITIES = ['Bueno', 'Malo'];
-
-    function spawnSimulatedFruit() {
-        if (!simulationActive) return;
-        if (currentMovingFruit) return; // Permitir uno por uno para mantener orden
+    // --- Registrar resultados del escaneo ---
+    function registerScanResult(data) {
+        if (data.status === "error") return;
         
-        // Activar láser
-        document.getElementById('laser').classList.add('active');
-
-        // Escoger una fruta aleatoria
-        const randomFruit = SIM_FRUITS[Math.floor(Math.random() * SIM_FRUITS.length)];
-        const emoji = FRUIT_EMOJIS[randomFruit] || '🍎';
-        
-        // Crear elemento en la faja
-        const fruitEl = document.createElement('div');
-        fruitEl.className = 'fruit-item';
-        fruitEl.innerText = emoji;
-        document.getElementById('fruit-target').appendChild(fruitEl);
-        currentMovingFruit = fruitEl;
-
-        // Iniciar animación (se desplaza de izquierda a la zona de escáner)
-        fruitEl.style.transition = 'left 1.5s linear';
-        setTimeout(() => {
-            fruitEl.style.left = '45%';
-        }, 50);
-
-        // Al llegar a la zona de escáner (1.5s después), simular solicitud HTTP o usar webcam actual
-        setTimeout(() => {
-            // Mandar a clasificar
-            // Si la webcam o imagen manual no están, simulamos el resultado en el servidor
-            // cargando una imagen ficticia según el nombre para que el pipeline lo procese
-            // Para simplicidad en el frontend, simulamos la respuesta aquí o la solicitamos
-            // Simulamos respuesta correspondiente al comportamiento del pipeline:
-            const simulatedQuality = Math.random() > 0.35 ? 'Bueno' : 'Malo';
-            const oodChance = Math.random() < 0.05; // 5% chance de OOD
-            
-            let mockPred = {
-                status: "success",
-                fruit: oodChance ? "Desconocido" : randomFruit,
-                quality: oodChance ? "Desconocido" : simulatedQuality,
-                d_norm: 0.45 + (Math.random() * 0.2),
-                confidence_fruit: oodChance ? 0.40 : 0.85 + (Math.random() * 0.15),
-                confidence_quality: oodChance ? 0.30 : 0.75 + (Math.random() * 0.2),
-                size_class: Math.random() > 0.5 ? 'Mediano' : (Math.random() > 0.5 ? 'Grande' : 'Pequeño')
-            };
-
-            // Ejecutar el diagnóstico
-            updateDiagnosticPanel(mockPred);
-            handlePredictionInSimulation(mockPred);
-
-        }, 1600);
-    }
-
-    function handlePredictionInSimulation(data) {
-        if (!currentMovingFruit) return;
-        
-        const fruitEl = currentMovingFruit;
-        const laser = document.getElementById('laser');
-
-        // Evaluar resultado
-        if (data.fruit === 'Desconocido' || data.fruit === 'No es Fruta') {
-            // OOD - Anomalía! Detener faja y disparar alarma
-            haltConveyor("Alarma: Objeto no identificado o de baja confianza detectado.");
-            laser.classList.remove('active');
+        if (data.fruit === "Desconocido" || data.fruit === "No es Fruta") {
+            counts.bad++;
+            counts.total++;
+            updateCounters();
             return;
         }
-
-        // Si es válida, clasificar en su bandeja
-        let binId = 'bin-normal';
+        
         let qualityClass = 'normal';
-
         if (data.quality === 'Bueno') {
-            binId = 'bin-good';
             qualityClass = 'good';
         } else if (data.quality === 'Malo') {
-            binId = 'bin-bad';
             qualityClass = 'bad';
         }
-
-        const binEl = document.getElementById(binId);
-
-        // Animación hacia la bandeja
-        setTimeout(() => {
-            laser.classList.remove('active');
-            fruitEl.style.transition = 'all 1s ease-in-out';
-            
-            // Obtener coordenadas de la bandeja seleccionada
-            const binRect = binEl.getBoundingClientRect();
-            const beltRect = document.getElementById('belt').getBoundingClientRect();
-            
-            const targetX = binRect.left - beltRect.left + (binRect.width / 2) - 25;
-            const targetY = binRect.top - beltRect.top + (binRect.height / 2) - 25;
-
-            fruitEl.style.left = targetX + 'px';
-            fruitEl.style.top = targetY + 'px';
-            fruitEl.style.transform = 'scale(0.3) rotate(180deg)';
-            fruitEl.style.opacity = '0';
-        }, 600);
-
-        // Sumar contadores al terminar de caer en la bandeja
-        setTimeout(() => {
-            counts[qualityClass]++;
-            counts.total++;
-            
-            if (fruitCounts[data.fruit] !== undefined) {
-                fruitCounts[data.fruit]++;
-            }
-
-            updateCounters();
-            updateChart();
-            
-            // Eliminar elemento de fruta y liberar faja para el siguiente
-            fruitEl.remove();
-            currentMovingFruit = null;
-            
-            // Destellar la bandeja momentáneamente
-            binEl.classList.add('active');
-            setTimeout(() => binEl.classList.remove('active'), 400);
-
-        }, 1700);
-    }
-
-    function haltConveyor(message) {
-        simulationActive = false;
-        document.getElementById('belt').classList.add('halted');
-        document.getElementById('alarm-msg').innerText = message;
-        document.getElementById('alarm-overlay').style.display = 'flex';
-    }
-
-    function resetAlarm() {
-        document.getElementById('alarm-overlay').style.display = 'none';
-        document.getElementById('belt').classList.remove('halted');
-        simulationActive = true;
         
-        // Remover fruta que causó el atasco
-        if (currentMovingFruit) {
-            currentMovingFruit.remove();
-            currentMovingFruit = null;
+        counts[qualityClass]++;
+        counts.total++;
+        
+        if (fruitCounts[data.fruit] !== undefined) {
+            fruitCounts[data.fruit]++;
         }
+        
+        updateCounters();
+        updateChart();
     }
 
     function updateCounters() {
-        document.getElementById('count-good').innerText = counts.good;
-        document.getElementById('count-normal').innerText = counts.normal;
-        document.getElementById('count-bad').innerText = counts.bad;
-
         document.getElementById('metric-total').innerText = counts.total;
         document.getElementById('metric-good').innerText = counts.good;
         document.getElementById('metric-normal').innerText = counts.normal;
         document.getElementById('metric-bad').innerText = counts.bad;
     }
 
-    function clearSimulation() {
+    function clearCounters() {
         counts = { good: 0, normal: 0, bad: 0, total: 0 };
         for (let k in fruitCounts) fruitCounts[k] = 0;
         updateCounters();
         updateChart();
-        if (currentMovingFruit) {
-            currentMovingFruit.remove();
-            currentMovingFruit = null;
-        }
-        resetAlarm();
     }
 
     // --- Configuración y Actualización del Gráfico Chart.js ---
@@ -1167,12 +1034,12 @@
                     'rgba(239, 68, 68, 0.6)',  // Apple (Red)
                     'rgba(245, 158, 11, 0.6)',  // Banana (Yellow/Orange)
                     'rgba(16, 185, 129, 0.6)',  // Guava (Green)
-                    'rgba(139, 92, 246, 0.6)',  // Lime (Lime/Purple)
+                    'rgba(34, 197, 94, 0.6)',   // Lime (Lime Green)
                     'rgba(251, 146, 60, 0.6)',  // Orange (Orange)
-                    'rgba(236, 72, 153, 0.6)'   // Pomegranate (Pink)
+                    'rgba(239, 68, 68, 0.6)'    // Pomegranate (Red)
                 ],
                 borderColor: [
-                    '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#fb923c', '#ec4899'
+                    '#ef4444', '#f59e0b', '#10b981', '#22c55e', '#fb923c', '#ef4444'
                 ],
                 borderWidth: 1.5,
                 borderRadius: 4
@@ -1202,7 +1069,6 @@
         barChart.data.datasets[0].data = Object.values(fruitCounts);
         barChart.update();
     }
-
 </script>
 </body>
 </html>

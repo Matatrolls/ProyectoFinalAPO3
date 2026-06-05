@@ -54,6 +54,12 @@ def parse_args():
         help="En modo 'train': omitir RF/SVM y entrenar solo la CNN (útil si los checkpoints ya existen)."
     )
     parser.add_argument(
+        "--force",
+        action="store_true",
+        default=False,
+        help="En modo 'train': forzar el entrenamiento de RF/SVM incluso si ya existen los checkpoints."
+    )
+    parser.add_argument(
         "--epochs",
         type=int,
         default=10,
@@ -85,11 +91,11 @@ def mode_train(args):
         rf_path = "experiments/checkpoints/rf_best.joblib"
         svm_path = "experiments/checkpoints/svm_best.joblib"
 
-        if os.path.exists(rf_path) and os.path.exists(svm_path):
+        if os.path.exists(rf_path) and os.path.exists(svm_path) and not args.force:
             print(f"[main] [OK] Checkpoints de RF y SVM ya encontrados. Saltando entrenamiento tradicional.")
             print(f"[main]    RF:  {rf_path}")
             print(f"[main]    SVM: {svm_path}")
-            print("[main]    (Usa '--cnn_only' explícitamente para confirmar este comportamiento)")
+            print("[main]    (Usa '--force' para forzar el re-entrenamiento tradicional)")
         else:
             print("[main] 1/2 Entrenando modelos tradicionales (Random Forest, SVM)...")
             from src.training.train_traditional import main as train_trad

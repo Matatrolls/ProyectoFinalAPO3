@@ -4,8 +4,8 @@
 # =============================================================
 
 # --- Deep Learning ---
-torch==2.12.0+cpu
-torchvision==0.27.0+cpu
+torch==2.12.0
+torchvision==0.27.0
 
 # --- Visión por Computadora ---
 opencv-python==4.13.0.92

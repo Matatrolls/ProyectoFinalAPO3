@@ -27,13 +27,26 @@ def main():
     cache_dir = "data"
     cache_path = os.path.join(cache_dir, "features_tabular.npz")
     
+    cache_valid = False
     if os.path.exists(cache_path):
-        print(f"[train_traditional] Cargando características tabulares desde caché: {cache_path}")
-        data = np.load(cache_path)
-        X_train, y_train = data['X_train'], data['y_train']
-        X_val, y_val = data['X_val'], data['y_val']
-        X_test, y_test = data['X_test'], data['y_test']
-    else:
+        try:
+            data = np.load(cache_path)
+            X_train, y_train = data['X_train'], data['y_train']
+            X_val, y_val = data['X_val'], data['y_val']
+            X_test, y_test = data['X_test'], data['y_test']
+            
+            total_cache_samples = X_train.shape[0] + X_val.shape[0] + X_test.shape[0]
+            total_current_samples = len(builder.inventory_full)
+            
+            if total_cache_samples == total_current_samples:
+                print(f"[train_traditional] Cargando características tabulares desde caché: {cache_path}")
+                cache_valid = True
+            else:
+                print(f"[train_traditional] La caché ({total_cache_samples} muestras) no coincide con el inventario actual ({total_current_samples} muestras). Regenerando...")
+        except Exception as e:
+            print(f"[train_traditional] Error leyendo caché ({e}). Regenerando...")
+            
+    if not cache_valid:
         print("[train_traditional] Extrayendo características tabulares (HSV + HOG) para todo el dataset...")
         t_start = time.time()
         # label="combined" para clasificación conjunta de (fruta + calidad)
@@ -59,38 +72,21 @@ def main():
     results = {}
     
     # ─────────────────────────────────────────────
-    # 4. Ajuste de hiperparámetros: Random Forest
+    # 4. Entrenamiento: Random Forest
     # ─────────────────────────────────────────────
     print("\n" + "="*50)
-    print("ENTRENAMIENTO Y AJUSTE: RANDOM FOREST")
+    print("ENTRENAMIENTO: RANDOM FOREST (Parámetros óptimos)")
     print("="*50)
     
-    rf_base = create_random_forest(random_state=42)
-    rf_param_grid = {
-        'n_estimators': [100, 200],
-        'max_depth': [10, 20, None]
-    }
-    
-    print(f"Ejecutando GridSearchCV (K=5) para Random Forest...")
-    rf_grid = GridSearchCV(
-        estimator=rf_base,
-        param_grid=rf_param_grid,
-        cv=5,
-        scoring='accuracy',
-        n_jobs=-1,
-        verbose=1
-    )
+    best_rf = create_random_forest(n_estimators=200, max_depth=None, random_state=42)
     
     t_start = time.time()
-    rf_grid.fit(X_train, y_train)
+    best_rf.fit(X_train, y_train)
     t_end = time.time()
     
     print(f"Random Forest entrenado en {t_end - t_start:.2f} segundos.")
-    print(f"Mejores parámetros RF: {rf_grid.best_params_}")
-    print(f"Mejor Accuracy en CV: {rf_grid.best_score_:.4f}")
     
-    # Guardar mejor modelo RF
-    best_rf = rf_grid.best_estimator_
+    # Guardar modelo RF
     rf_checkpoint_path = "experiments/checkpoints/rf_best.joblib"
     joblib.dump(best_rf, rf_checkpoint_path)
     print(f"Modelo Random Forest guardado en: {rf_checkpoint_path}")
@@ -101,49 +97,27 @@ def main():
     print(f"Accuracy de Random Forest en Validación: {rf_val_acc:.4f}")
     
     results['random_forest'] = {
-        'best_params': rf_grid.best_params_,
-        'best_cv_score': float(rf_grid.best_score_),
+        'best_params': {'n_estimators': 200, 'max_depth': None},
         'val_accuracy': float(rf_val_acc),
-        'tuning_time_sec': t_end - t_start
+        'training_time_sec': t_end - t_start
     }
     
     # ─────────────────────────────────────────────
-    # 5. Ajuste de hiperparámetros: SVM
+    # 5. Entrenamiento: SVM
     # ─────────────────────────────────────────────
     print("\n" + "="*50)
-    print("ENTRENAMIENTO Y AJUSTE: SVM")
+    print("ENTRENAMIENTO: SVM (Parámetros óptimos)")
     print("="*50)
     
-    # Reducimos un poco el dataset para el ajuste de SVM si es muy grande,
-    # pero dado que corre en n_jobs=-1 e hilos nativos de C++, probamos primero con todo.
-    # Si tarda demasiado, el usuario verá la barra de progreso de GridSearch.
-    # NOTA: C=[0.1, 1, 10] y gamma=['scale'] es suficiente y rápido.
-    svm_base = create_svm(random_state=42)
-    svm_param_grid = {
-        'C': [0.1, 1, 10],
-        'gamma': ['scale', 'auto']
-    }
-    
-    print(f"Ejecutando GridSearchCV (K=5) para SVM...")
-    svm_grid = GridSearchCV(
-        estimator=svm_base,
-        param_grid=svm_param_grid,
-        cv=5,
-        scoring='accuracy',
-        n_jobs=-1,
-        verbose=1
-    )
+    best_svm = create_svm(C=10, gamma='scale', random_state=42)
     
     t_start = time.time()
-    svm_grid.fit(X_train, y_train)
+    best_svm.fit(X_train, y_train)
     t_end = time.time()
     
     print(f"SVM entrenado en {t_end - t_start:.2f} segundos.")
-    print(f"Mejores parámetros SVM: {svm_grid.best_params_}")
-    print(f"Mejor Accuracy en CV: {svm_grid.best_score_:.4f}")
     
-    # Guardar mejor modelo SVM
-    best_svm = svm_grid.best_estimator_
+    # Guardar modelo SVM
     svm_checkpoint_path = "experiments/checkpoints/svm_best.joblib"
     joblib.dump(best_svm, svm_checkpoint_path)
     print(f"Modelo SVM guardado en: {svm_checkpoint_path}")
@@ -154,10 +128,9 @@ def main():
     print(f"Accuracy de SVM en Validación: {svm_val_acc:.4f}")
     
     results['svm'] = {
-        'best_params': svm_grid.best_params_,
-        'best_cv_score': float(svm_grid.best_score_),
+        'best_params': {'C': 10, 'gamma': 'scale'},
         'val_accuracy': float(svm_val_acc),
-        'tuning_time_sec': t_end - t_start
+        'training_time_sec': t_end - t_start
     }
     
     # Guardar reporte de resultados

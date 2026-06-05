@@ -55,7 +55,7 @@ HSV_BINS = 32
 RANDOM_SEED = 42
 
 # Umbral mínimo de confianza del clasificador (OOD)
-OOD_CONFIDENCE_THRESHOLD = 0.70
+OOD_CONFIDENCE_THRESHOLD = 0.70  # Restaurado a 0.70 por petición del usuario para evitar falsos positivos
 
 # Estadísticas de normalización (se calculan del dataset, aquí usamos ImageNet como base)
 NORMALIZE_MEAN = [0.485, 0.456, 0.406]

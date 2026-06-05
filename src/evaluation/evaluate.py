@@ -88,6 +88,50 @@ def plot_learning_curves(log_csv_path, save_path):
     plt.close()
     print(f"[evaluate] Curvas de aprendizaje guardadas: {save_path}")
 
+def plot_comparison_chart(summary, save_path):
+    """Genera un gráfico de barras comparativo de precisión entre los modelos."""
+    if not summary:
+        print("[evaluate] Sin datos en summary para generar gráfico comparativo.")
+        return
+        
+    models = list(summary.keys())
+    fruit_accs = [summary[m].get('accuracy_fruit', 0.0) * 100 for m in models]
+    quality_accs = [summary[m].get('accuracy_quality', 0.0) * 100 for m in models]
+    
+    x = np.arange(len(models))
+    width = 0.35
+    
+    fig, ax = plt.subplots(figsize=(8, 6))
+    rects1 = ax.bar(x - width/2, fruit_accs, width, label='Exactitud Fruta', color='#6366f1')
+    rects2 = ax.bar(x + width/2, quality_accs, width, label='Exactitud Calidad', color='#10b981')
+    
+    ax.set_ylabel('Exactitud (%)')
+    ax.set_title('Comparativa de Modelos: Fruta vs Calidad')
+    ax.set_xticks(x)
+    ax.set_xticklabels([m.replace('_', ' ').upper() for m in models])
+    ax.legend()
+    ax.set_ylim(0, 105)
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+    
+    # Añadir etiquetas de porcentaje arriba de cada barra
+    def autolabel(rects):
+        for rect in rects:
+            height = rect.get_height()
+            ax.annotate(f'{height:.1f}%',
+                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xytext=(0, 3),  # 3 points vertical offset
+                        textcoords="offset points",
+                        ha='center', va='bottom')
+                        
+    autolabel(rects1)
+    autolabel(rects2)
+    
+    plt.tight_layout()
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    plt.savefig(save_path, dpi=300)
+    plt.close()
+    print(f"[evaluate] Gráfico comparativo de modelos guardado en: {save_path}")
+
 def main():
     print("\n" + "="*50)
     print("PIPELINE DE EVALUACIÓN GLOBAL")
@@ -290,6 +334,10 @@ def main():
     else:
         print(f"[evaluate] No se encontró el modelo CNN en {cnn_path}")
         
+    # Generar gráfico comparativo de modelos
+    if len(evaluation_summary) > 0:
+        plot_comparison_chart(evaluation_summary, "experiments/results/model_comparison.png")
+
     # Guardar reporte consolidado
     summary_path = "experiments/results/evaluation_summary.json"
     with open(summary_path, 'w', encoding='utf-8') as f:

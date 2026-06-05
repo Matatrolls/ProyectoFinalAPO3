@@ -136,6 +136,79 @@ class SizeEstimator:
             
         return size_class, d_norm
 
+    def crop_fruit(self, image_input, padding=0.15):
+        """
+        Segmenta la fruta basándose en el contorno de saturación, limpia el fondo 
+        reemplazándolo con color blanco puro (enmascaramiento) y retorna la imagen recortada.
+        Si falla la detección o no es válido el objeto, retorna la imagen original.
+        """
+        if isinstance(image_input, str):
+            img = cv2.imread(image_input)
+        else:
+            img = image_input
+
+        if img is None:
+            return None
+
+        h, w = img.shape[:2]
+        
+        # Segmentación idéntica a process_image
+        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        s_channel = hsv[:, :, 1]
+        blurred = cv2.GaussianBlur(s_channel, (5, 5), 0)
+        _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        thresh = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel, iterations=2)
+        
+        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if not contours:
+            return img
+
+        largest_contour = max(contours, key=cv2.contourArea)
+        area = cv2.contourArea(largest_contour)
+        
+        # Filtro geométrico básico
+        img_area = h * w
+        area_norm = area / img_area
+        if area_norm < 0.02 or area_norm > 0.95:
+            return img
+
+        # Crear una imagen en blanco puro (del mismo tamaño que la original)
+        white_bg = np.ones_like(img) * 255
+        
+        # Crear máscara binaria con el contorno de la fruta
+        mask = np.zeros((h, w), dtype=np.uint8)
+        cv2.drawContours(mask, [largest_contour], -1, 255, -1)
+        
+        # Mezclar: donde mask es 255 (fruta) usar img, donde es 0 usar el fondo blanco
+        masked_img = np.where(mask[:, :, np.newaxis] == 255, img, white_bg)
+
+        x, y, bw, bh = cv2.boundingRect(largest_contour)
+        if bw == 0 or bh == 0:
+            return img
+            
+        aspect_ratio = bw / float(bh)
+        if aspect_ratio < 0.2 or aspect_ratio > 5.0:
+            return img
+
+        # Calcular márgenes (padding)
+        pad_w = int(bw * padding)
+        pad_h = int(bh * padding)
+        
+        x1 = max(0, x - pad_w)
+        y1 = max(0, y - pad_h)
+        x2 = min(w, x + bw + pad_w)
+        y2 = min(h, y + bh + pad_h)
+        
+        # Recortar la fruta sobre el fondo blanco enmascarado
+        cropped = masked_img[y1:y2, x1:x2]
+        if cropped.size == 0:
+            return img
+            
+        return cropped
+
+
 if __name__ == "__main__":
     # Test básico
     estimator = SizeEstimator()
