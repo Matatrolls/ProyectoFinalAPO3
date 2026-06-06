@@ -4,7 +4,7 @@ import time
 import joblib
 import numpy as np
 
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.metrics import classification_report, accuracy_score
 
 from src.data.preprocess import FruitDatasetBuilder
@@ -18,10 +18,17 @@ def main():
     builder = FruitDatasetBuilder(balance=True)
     builder.build()
     
-    # 2. Ajustar el Estimador de Tamaño Geométrico con el conjunto de entrenamiento
-    print("[train_traditional] Ajustando estimador de tamaño geométrico...")
+    # 2. Ajustar el Estimador de Tamaño Geométrico con el conjunto de entrenamiento (usando subconjunto del 25% para agilizar)
+    print("[train_traditional] Ajustando estimador de tamaño geométrico (usando subconjunto del 25% para agilizar)...")
+    train_labels_for_size = [item["fruit"] for item in builder.train_inv]
+    train_inv_sub, _ = train_test_split(
+        builder.train_inv,
+        test_size=0.75,
+        stratify=train_labels_for_size,
+        random_state=42
+    )
     size_estimator = SizeEstimator()
-    size_estimator.fit(builder.train_inv)
+    size_estimator.fit(train_inv_sub)
     
     # 3. Extraer o cargar características tabulares (HSV + HOG)
     cache_dir = "data"
@@ -60,7 +67,26 @@ def main():
                             X_val=X_val, y_val=y_val, X_test=X_test, y_test=y_test)
         print(f"[train_traditional] Características guardadas en caché: {cache_path}")
         
-    print(f"Dimensiones de los conjuntos:")
+    print(f"Dimensiones originales:")
+    print(f"  X_train: {X_train.shape}, y_train: {y_train.shape}")
+    print(f"  X_val  : {X_val.shape}, y_val  : {y_val.shape}")
+    
+    # Submuestrear al 25% para agilizar entrenamiento tradicional
+    print("[train_traditional] Reduciendo conjunto de entrenamiento y validación al 25% para acelerar el ajuste en CPU...")
+    X_train, _, y_train, _ = train_test_split(
+        X_train, y_train,
+        test_size=0.75,
+        stratify=y_train,
+        random_state=42
+    )
+    X_val, _, y_val, _ = train_test_split(
+        X_val, y_val,
+        test_size=0.75,
+        stratify=y_val,
+        random_state=42
+    )
+    
+    print(f"Nuevas dimensiones de entrenamiento:")
     print(f"  X_train: {X_train.shape}, y_train: {y_train.shape}")
     print(f"  X_val  : {X_val.shape}, y_val  : {y_val.shape}")
     print(f"  X_test : {X_test.shape}, y_test : {y_test.shape}")

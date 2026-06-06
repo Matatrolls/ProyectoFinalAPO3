@@ -122,7 +122,9 @@ python main.py --mode train
     python main.py --mode train --cnn_only --batch_size 64
     ```
 
-*Optimización en CPU: Si el script no detecta una GPU NVIDIA, reducirá automáticamente el tamaño del dataset de entrenamiento y validación al 25% para evitar esperas prolongadas. Esto permite que el entrenamiento en CPU tome aproximadamente 1.5 a 2 minutos por época manteniendo el comportamiento y la convergencia.*
+*   **Optimización para CPU y Aceleración de Entrenamiento**:
+    *   **Red Neuronal (CNN)**: Si no se detecta una GPU NVIDIA, el script reduce automáticamente el conjunto de entrenamiento y validación al **25%** para la CNN. Esto permite entrenar en CPU en aproximadamente 1.5 a 2 minutos por época.
+    *   **Modelos Tradicionales (RF y SVM)**: Para evitar esperas extremadamente largas causadas por el ajuste de la SVM (que realiza internamente validación cruzada para estimar probabilidades), el entrenamiento tradicional submuestrea automáticamente las características al **25%** de su tamaño original. Esto reduce el tiempo de entrenamiento de los modelos tradicionales unas **16 veces**. Además, la sintonización del estimador de tamaño geométrico ([SizeEstimator.fit](file:///c:/Users/scosb/OneDrive/Desktop/Universidad/APO_III/ProyectoFinalAPO3/src/data/size_estimator.py#L87-L113)) utiliza un subconjunto del **25%** para agilizar el proceso de perfilado estadístico.
 
 ### B. Modo Evaluación (`evaluate`)
 Evalúa los modelos guardados contra un conjunto de prueba independiente (20% del total de datos que nunca vieron los clasificadores). Genera matrices de confusión para cada modelo, curvas de aprendizaje de la CNN y un JSON de comparación en `experiments/results/`:
