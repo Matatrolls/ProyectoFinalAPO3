@@ -127,10 +127,27 @@ python main.py --mode train
     *   **Modelos Tradicionales (RF y SVM)**: Para evitar esperas extremadamente largas causadas por el ajuste de la SVM (que realiza internamente validación cruzada para estimar probabilidades), el entrenamiento tradicional submuestrea automáticamente las características al **25%** de su tamaño original. Esto reduce el tiempo de entrenamiento de los modelos tradicionales unas **16 veces**. Además, la sintonización del estimador de tamaño geométrico ([SizeEstimator.fit](file:///c:/Users/scosb/OneDrive/Desktop/Universidad/APO_III/ProyectoFinalAPO3/src/data/size_estimator.py#L87-L113)) utiliza un subconjunto del **25%** para agilizar el proceso de perfilado estadístico.
 
 ### B. Modo Evaluación (`evaluate`)
-Evalúa los modelos guardados contra un conjunto de prueba independiente (20% del total de datos que nunca vieron los clasificadores). Genera matrices de confusión para cada modelo, curvas de aprendizaje de la CNN y un JSON de comparación en `experiments/results/`:
+Evalúa los modelos guardados contra un conjunto de prueba independiente (el cual nunca vieron los clasificadores). Genera métricas detalladas y gráficos en la carpeta `experiments/results/`:
 ```bash
 python main.py --mode evaluate
 ```
+
+**Gráficas y Resultados Generados:**
+*   **Matrices de Confusión de Random Forest**:
+    *   `experiments/results/confusion_matrix_rf_fruit.png` (Tipo de Fruta)
+    *   `experiments/results/confusion_matrix_rf_quality.png` (Calidad de Fruta)
+*   **Matrices de Confusión de SVM**:
+    *   `experiments/results/confusion_matrix_svm_fruit.png` (Tipo de Fruta)
+    *   `experiments/results/confusion_matrix_svm_quality.png` (Calidad de Fruta)
+*   **Matrices de Confusión de la CNN Multi-Head**:
+    *   `experiments/results/confusion_matrix_cnn_fruit.png` (Tipo de Fruta)
+    *   `experiments/results/confusion_matrix_cnn_quality.png` (Calidad de Fruta)
+*   **Curvas de Aprendizaje de la CNN**:
+    *   `experiments/results/cnn_learning_curves.png` (Gráfico con curvas de Pérdida y Precisión de fruta/calidad)
+*   **Comparativa Global**:
+    *   `experiments/results/model_comparison.png` (Gráfico de barras comparando la exactitud de fruta y calidad de todos los modelos)
+*   **Reporte JSON Consolidado**:
+    *   `experiments/results/evaluation_summary.json` (Resumen con las métricas de exactitud y tasas de rechazo OOD de cada modelo)
 
 ### C. Modo Despliegue (`deploy`)
 Lanza la aplicación web interactiva local de Flask en el puerto `8080`:
