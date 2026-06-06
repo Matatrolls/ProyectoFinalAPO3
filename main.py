@@ -62,7 +62,7 @@ def parse_args():
     parser.add_argument(
         "--epochs",
         type=int,
-        default=10,
+        default=20,
         help="Número de épocas para el entrenamiento de la CNN (default: 10)."
     )
     parser.add_argument(

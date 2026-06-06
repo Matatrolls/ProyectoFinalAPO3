@@ -4,15 +4,15 @@
             "n_estimators": 200,
             "max_depth": null
         },
-        "val_accuracy": 0.8518518518518519,
-        "training_time_sec": 3.9684596061706543
+        "val_accuracy": 0.8635477582846004,
+        "training_time_sec": 1.8071074485778809
     },
     "svm": {
         "best_params": {
             "C": 10,
             "gamma": "scale"
         },
-        "val_accuracy": 0.8401559454191033,
-        "training_time_sec": 74.05381512641907
+        "val_accuracy": 0.8791423001949318,
+        "training_time_sec": 19.25101089477539
     }
 }
